@@ -182,6 +182,24 @@ CREATE TABLE IF NOT EXISTS codebase_files (
 );
 
 -- ============================================
+-- USER WORKFLOWS TABLE (free + purchased workflows)
+-- ============================================
+CREATE TABLE IF NOT EXISTS user_workflows (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id TEXT NOT NULL REFERENCES users(id),
+  email TEXT NOT NULL,
+  workflow_slug TEXT NOT NULL,
+  source TEXT DEFAULT 'FREE_SIGNUP' CHECK (source IN ('FREE_SIGNUP', 'PURCHASE', 'BUNDLE')),
+  status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'REFUNDED', 'EXPIRED')),
+  granted_at TIMESTAMPTZ DEFAULT now(),
+  download_count INTEGER DEFAULT 0,
+  last_downloaded_at TIMESTAMPTZ
+);
+
+ALTER TABLE user_workflows ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own workflows" ON user_workflows FOR SELECT USING (auth.uid()::text = user_id);
+
+-- ============================================
 -- PURCHASED CODEBASES TABLE
 -- ============================================
 CREATE TABLE IF NOT EXISTS purchased_codebases (
