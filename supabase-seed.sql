@@ -4,31 +4,43 @@
 -- ============================================
 
 -- ============================================
--- INSERT ALL 15 PRODUCTS
+-- INSERT ALL PRODUCTS (Voice Agents + Workflows + 8 Codebases)
 -- ============================================
 
-INSERT INTO products (slug, title, description, type, category, niche, price, status, tags, rating, review_count) VALUES
+INSERT INTO products (slug, title, description, type, category, niche, price, status, tags, rating, review_count, compare_price) VALUES
 
 -- Voice Agents (1-7)
-('plumber-voice-agent', 'Plumber Voice Agent', 'AI voice agent that answers emergency plumbing calls 24/7, captures lead info, and dispatches technicians automatically.', 'VOICE_AGENT', 'Voice Agents', 'Plumbing', 2900, 'PUBLISHED', ARRAY['voice', 'plumbing', 'lead-capture', 'retell'], 5.0, 12),
-('dental-appointment-booking', 'Dental Appointment Booking', 'Voice-powered booking agent for dental clinics with SMS confirmations and insurance capture.', 'VOICE_AGENT', 'Voice Agents', 'Dental', 2900, 'PUBLISHED', ARRAY['voice', 'dental', 'booking', 'cal.com'], 5.0, 8),
-('real-estate-lead-qualification', 'Real Estate Lead Qualification', 'Voice agent that qualifies leads by budget, timeline, and pre-approval status with CRM sync.', 'VOICE_AGENT', 'Voice Agents', 'Real Estate', 2900, 'PUBLISHED', ARRAY['voice', 'real-estate', 'crm', 'lead-scoring'], 4.8, 15),
-('restaurant-whatsapp-order', 'Restaurant WhatsApp Order', 'WhatsApp bot that takes orders, calculates totals, and sends order confirmations.', 'VOICE_AGENT', 'Voice Agents', 'Restaurant', 2900, 'PUBLISHED', ARRAY['whatsapp', 'restaurant', 'ordering', 'orders'], 5.0, 22),
-('hvac-emergency-dispatch', 'HVAC Emergency Dispatch', 'Emergency classification and auto-dispatch for HVAC service calls with technician notification.', 'VOICE_AGENT', 'Voice Agents', 'HVAC', 2900, 'PUBLISHED', ARRAY['voice', 'hvac', 'emergency', 'dispatch'], 5.0, 7),
-('cleaning-service-quote', 'Cleaning Service Quote', 'Automated quote calculator that prices cleaning services based on sqft, rooms, and extras.', 'WORKFLOW', 'Voice Agents', 'Cleaning', 2900, 'PUBLISHED', ARRAY['workflow', 'cleaning', 'quote', 'resend'], 4.9, 19),
-('fitness-coach-followup', 'Fitness Coach Follow-Up', 'Automated client follow-up based on workout gaps, membership status, and personalized messaging.', 'WORKFLOW', 'Voice Agents', 'Fitness', 2900, 'PUBLISHED', ARRAY['workflow', 'fitness', 'sms', 'twilio'], 5.0, 11),
+('plumber-voice-agent', 'Plumber Voice Agent', 'AI voice agent that answers emergency plumbing calls 24/7, captures lead info, and dispatches technicians automatically.', 'VOICE_AGENT', 'Voice Agents', 'Plumbing', 2900, 'PUBLISHED', ARRAY['voice', 'plumbing', 'lead-capture', 'retell'], 5.0, 12, NULL),
+('dental-appointment-booking', 'Dental Appointment Booking', 'Voice-powered booking agent for dental clinics with SMS confirmations and insurance capture.', 'VOICE_AGENT', 'Voice Agents', 'Dental', 2900, 'PUBLISHED', ARRAY['voice', 'dental', 'booking', 'cal.com'], 5.0, 8, NULL),
+('real-estate-lead-qualification', 'Real Estate Lead Qualification', 'Voice agent that qualifies leads by budget, timeline, and pre-approval status with CRM sync.', 'VOICE_AGENT', 'Voice Agents', 'Real Estate', 2900, 'PUBLISHED', ARRAY['voice', 'real-estate', 'crm', 'lead-scoring'], 4.8, 15, NULL),
+('restaurant-whatsapp-order', 'Restaurant WhatsApp Order', 'WhatsApp bot that takes orders, calculates totals, and sends order confirmations.', 'VOICE_AGENT', 'Voice Agents', 'Restaurant', 2900, 'PUBLISHED', ARRAY['whatsapp', 'restaurant', 'ordering', 'orders'], 5.0, 22, NULL),
+('hvac-emergency-dispatch', 'HVAC Emergency Dispatch', 'Emergency classification and auto-dispatch for HVAC service calls with technician notification.', 'VOICE_AGENT', 'Voice Agents', 'HVAC', 2900, 'PUBLISHED', ARRAY['voice', 'hvac', 'emergency', 'dispatch'], 5.0, 7, NULL),
+('cleaning-service-quote', 'Cleaning Service Quote', 'Automated quote calculator that prices cleaning services based on sqft, rooms, and extras.', 'WORKFLOW', 'Voice Agents', 'Cleaning', 2900, 'PUBLISHED', ARRAY['workflow', 'cleaning', 'quote', 'resend'], 4.9, 19, NULL),
+('fitness-coach-followup', 'Fitness Coach Follow-Up', 'Automated client follow-up based on workout gaps, membership status, and personalized messaging.', 'WORKFLOW', 'Voice Agents', 'Fitness', 2900, 'PUBLISHED', ARRAY['workflow', 'fitness', 'sms', 'twilio'], 5.0, 11, NULL),
 
 -- AI Marketing Pack (8-10)
-('content-repurposing', 'Content Repurposing', 'Transform one blog post into Twitter threads, LinkedIn posts, Instagram captions, and TikTok scripts.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'content', 'gemini', 'social-media'], 4.9, 34),
-('lead-magnet-generator', 'Lead Magnet Generator', 'AI-powered lead magnet content generator for any topic, industry, or audience.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'lead-magnet', 'gemini', 'content'], 4.8, 28),
-('cold-email-personalizer', 'Cold Email Personalizer', 'Hyper-personalized cold email generator from LinkedIn data with multi-variant output.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'email', 'gemini', 'hunter.io'], 4.7, 16),
+('content-repurposing', 'Content Repurposing', 'Transform one blog post into Twitter threads, LinkedIn posts, Instagram captions, and TikTok scripts.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'content', 'gemini', 'social-media'], 4.9, 34, NULL),
+('lead-magnet-generator', 'Lead Magnet Generator', 'AI-powered lead magnet content generator for any topic, industry, or audience.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'lead-magnet', 'gemini', 'content'], 4.8, 28, NULL),
+('cold-email-personalizer', 'Cold Email Personalizer', 'Hyper-personalized cold email generator from LinkedIn data with multi-variant output.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'email', 'gemini', 'hunter.io'], 4.7, 16, NULL),
 
 -- Business Operations (11-15)
-('meeting-summarizer', 'Meeting Summarizer', 'Extract decisions, action items with owners and deadlines, and sentiment from meeting notes.', 'WORKFLOW', 'Workflows', 'Business', 2900, 'PUBLISHED', ARRAY['workflow', 'meetings', 'gemini', 'action-items'], 5.0, 45),
-('support-ticket-router', 'Support Ticket Router', 'AI-powered ticket classification, auto-resolution, and intelligent routing to teams.', 'WORKFLOW', 'Workflows', 'Support', 2900, 'PUBLISHED', ARRAY['workflow', 'support', 'ai', 'classification'], 4.9, 21),
-('competitor-price-monitor', 'Competitor Price Monitor', 'Competitor price monitoring every 6 hours with AI trend analysis and Slack alerts.', 'WORKFLOW', 'Workflows', 'Business', 2900, 'PUBLISHED', ARRAY['workflow', 'price', 'scraping', 'slack'], 4.6, 9),
-('resume-screening', 'Resume Screening', 'AI-powered candidate screening with match scoring, skills analysis, and interview questions.', 'WORKFLOW', 'Workflows', 'HR', 2900, 'PUBLISHED', ARRAY['workflow', 'hr', 'gemini', 'hiring'], 5.0, 33),
-('social-comment-responder', 'Social Comment Responder', 'Auto-generate on-brand replies to social media comments with sentiment detection.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'social', 'gemini', 'automation'], 4.8, 27)
+('meeting-summarizer', 'Meeting Summarizer', 'Extract decisions, action items with owners and deadlines, and sentiment from meeting notes.', 'WORKFLOW', 'Workflows', 'Business', 2900, 'PUBLISHED', ARRAY['workflow', 'meetings', 'gemini', 'action-items'], 5.0, 45, NULL),
+('support-ticket-router', 'Support Ticket Router', 'AI-powered ticket classification, auto-resolution, and intelligent routing to teams.', 'WORKFLOW', 'Workflows', 'Support', 2900, 'PUBLISHED', ARRAY['workflow', 'support', 'ai', 'classification'], 4.9, 21, NULL),
+('competitor-price-monitor', 'Competitor Price Monitor', 'Competitor price monitoring every 6 hours with AI trend analysis and Slack alerts.', 'WORKFLOW', 'Workflows', 'Business', 2900, 'PUBLISHED', ARRAY['workflow', 'price', 'scraping', 'slack'], 4.6, 9, NULL),
+('resume-screening', 'Resume Screening', 'AI-powered candidate screening with match scoring, skills analysis, and interview questions.', 'WORKFLOW', 'Workflows', 'HR', 2900, 'PUBLISHED', ARRAY['workflow', 'hr', 'gemini', 'hiring'], 5.0, 33, NULL),
+('social-comment-responder', 'Social Comment Responder', 'Auto-generate on-brand replies to social media comments with sentiment detection.', 'WORKFLOW', 'Workflows', 'Marketing', 2900, 'PUBLISHED', ARRAY['workflow', 'social', 'gemini', 'automation'], 4.8, 27, NULL),
+
+-- ═══════════════════════════════════════
+-- CODEBASES (8 products)
+-- ═══════════════════════════════════════
+('tars-conversa-ai-livechat', 'TARS-CONVERSA — AI LiveChat Engine', 'Production-grade real-time conversational AI platform with WebSocket-driven bi-directional communication and context-aware LLM orchestration for sub-200ms response latency.', 'WORKFLOW', 'Codebases', 'Development', 7900, 'PUBLISHED', ARRAY['codebase', 'react', 'websocket', 'openai', 'livechat'], 5.0, 27, 12900),
+('finflock-algorithmic-trading', 'Finflock — Algorithmic Trading Engine', 'Institutional-grade quantitative finance toolkit automating the full algorithmic trading pipeline from data ingestion to backtesting with 20+ technical indicators.', 'WORKFLOW', 'Codebases', 'Sales', 9700, 'PUBLISHED', ARRAY['codebase', 'python', 'pandas', 'trading', 'backtesting'], 5.0, 19, 14900),
+('gmaps-scraper-ai-outreach', 'GMaps Scraper — AI Cold Outreach Engine', 'Enterprise-grade lead generation combining high-throughput Google Maps business data extraction with LLM-powered hyper-personalized cold email generation on Flask.', 'WORKFLOW', 'Codebases', 'Sales', 12700, 'PUBLISHED', ARRAY['codebase', 'flask', 'python', 'gemini', 'scraper'], 5.0, 23, 19700),
+('hashtric-marketing-intelligence', 'Hashtric — Marketing Intelligence OS', 'Full-stack marketing intelligence OS compressing the entire paid advertising lifecycle from trending topic discovery to live ad deployment in under 60 seconds with cross-platform attribution.', 'WORKFLOW', 'Codebases', 'Marketing', 19700, 'PUBLISHED', ARRAY['codebase', 'next.js', 'meta-ads', 'google-ads', 'attribution'], 5.0, 14, 29700),
+('jobify-universal-ats-extension', 'Jobify — Universal ATS Chrome Extension', 'Manifest V3 Chrome extension unifying multi-platform recruitment into a single ATS command center aggregating candidates from LinkedIn, Naukri, Indeed & Internshala.', 'WORKFLOW', 'Codebases', 'HR', 9700, 'PUBLISHED', ARRAY['codebase', 'chrome-extension', 'react', 'ats', 'recruitment'], 5.0, 31, 14900),
+('autostream-social-lead-agent', 'AutoStream — Social-to-Lead AI Agent', 'Production-ready autonomous lead capture agent built on LangGraph stateful orchestration with FAISS-powered RAG for context-grounded conversations.', 'WORKFLOW', 'Codebases', 'Sales', 14700, 'PUBLISHED', ARRAY['codebase', 'langgraph', 'faiss', 'python', 'rag'], 5.0, 16, 21700),
+('resumod-ats-optimizer-extension', 'Resumod — ATS Resume Optimizer Extension', 'Manifest V3 Chrome extension providing end-to-end ATS optimization from real-time compatibility scoring to AI resume rewriting with one-click optimized download.', 'WORKFLOW', 'Codebases', 'HR', 6700, 'PUBLISHED', ARRAY['codebase', 'chrome-extension', 'openai', 'ats', 'resume'], 5.0, 34, 9900),
+('trend-analyzer-threat-intelligence', 'Trend Analyzer — Social Threat Intelligence', 'Full-stack social media threat intelligence platform combining real-time trend visualization with automated hate speech detection and coordinated campaign monitoring.', 'WORKFLOW', 'Codebases', 'Media', 14900, 'PUBLISHED', ARRAY['codebase', 'next.js', 'convex', 'clerk', 'nlp'], 5.0, 11, 21900)
 
 ON CONFLICT (slug) DO UPDATE SET
   title = EXCLUDED.title,
@@ -36,7 +48,8 @@ ON CONFLICT (slug) DO UPDATE SET
   price = EXCLUDED.price,
   tags = EXCLUDED.tags,
   rating = EXCLUDED.rating,
-  review_count = EXCLUDED.review_count;
+  review_count = EXCLUDED.review_count,
+  compare_price = EXCLUDED.compare_price;
 
 -- ============================================
 -- INSERT WORKFLOW DETAILS
@@ -201,7 +214,36 @@ BEGIN
       (SELECT id FROM products WHERE slug = 'support-ticket-router'),
       (SELECT id FROM products WHERE slug = 'competitor-price-monitor'),
       (SELECT id FROM products WHERE slug = 'resume-screening'),
-      (SELECT id FROM products WHERE slug = 'social-comment-responder')
+      (SELECT id FROM products WHERE slug = 'social-comment-responder'),
+      (SELECT id FROM products WHERE slug = 'tars-conversa-ai-livechat'),
+      (SELECT id FROM products WHERE slug = 'finflock-algorithmic-trading'),
+      (SELECT id FROM products WHERE slug = 'gmaps-scraper-ai-outreach'),
+      (SELECT id FROM products WHERE slug = 'hashtric-marketing-intelligence'),
+      (SELECT id FROM products WHERE slug = 'jobify-universal-ats-extension'),
+      (SELECT id FROM products WHERE slug = 'autostream-social-lead-agent'),
+      (SELECT id FROM products WHERE slug = 'resumod-ats-optimizer-extension'),
+      (SELECT id FROM products WHERE slug = 'trend-analyzer-threat-intelligence')
     ]::UUID[], 13800)
   ON CONFLICT (product_id) DO NOTHING;
 END $$;
+
+-- ============================================
+-- CODEBASE FILES - Map products to Supabase storage paths
+-- ============================================
+-- Upload your zip files to Supabase Storage → codebases bucket
+-- Then insert the mapping here:
+
+INSERT INTO codebase_files (product_slug, file_name, storage_path, version) VALUES
+  ('tars-conversa-ai-livechat', 'TARS-CONVERSA-main.zip', 'codebases/TARS-CONVERSA-main.zip', '1.0.0'),
+  ('finflock-algorithmic-trading', 'Finflock-main.zip', 'codebases/Finflock-main.zip', '1.0.0'),
+  ('gmaps-scraper-ai-outreach', 'Google-Maps-Scrapper-master.zip', 'codebases/Google-Maps-Scrapper-master.zip', '1.0.0'),
+  ('hashtric-marketing-intelligence', 'hashtric-full-stack.zip', 'codebases/hashtric-full-stack.zip', '1.0.0'),
+  ('jobify-universal-ats-extension', 'jobify-chrome-extension.zip', 'codebases/jobify-chrome-extension.zip', '1.0.0'),
+  ('autostream-social-lead-agent', 'autostream-agent-main.zip', 'codebases/autostream-agent-main.zip', '1.0.0'),
+  ('resumod-ats-optimizer-extension', 'resumemod-main.zip', 'codebases/resumemod-main.zip', '1.0.0'),
+  ('trend-analyzer-threat-intelligence', 'Trend-Analyzer-master.zip', 'codebases/Trend-Analyzer-master.zip', '1.0.0')
+ON CONFLICT (product_slug) DO UPDATE SET
+  file_name = EXCLUDED.file_name,
+  storage_path = EXCLUDED.storage_path,
+  version = EXCLUDED.version,
+  updated_at = now();

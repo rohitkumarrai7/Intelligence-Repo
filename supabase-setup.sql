@@ -167,13 +167,48 @@ CREATE TABLE IF NOT EXISTS coupons (
 );
 
 -- ============================================
+-- CODEBASE FILES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS codebase_files (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  product_slug TEXT UNIQUE NOT NULL,
+  file_name TEXT NOT NULL,
+  storage_path TEXT NOT NULL,
+  file_size BIGINT,
+  version TEXT DEFAULT '1.0.0',
+  download_count INTEGER DEFAULT 0,
+  created_at TIMESTAMPTZ DEFAULT now(),
+  updated_at TIMESTAMPTZ DEFAULT now()
+);
+
+-- ============================================
+-- PURCHASED CODEBASES TABLE
+-- ============================================
+CREATE TABLE IF NOT EXISTS purchased_codebases (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id TEXT REFERENCES users(id),
+  email TEXT NOT NULL,
+  product_slug TEXT NOT NULL,
+  polar_checkout_id TEXT,
+  polar_subscription_id TEXT,
+  status TEXT DEFAULT 'ACTIVE' CHECK (status IN ('ACTIVE', 'REFUNDED', 'EXPIRED')),
+  purchased_at TIMESTAMPTZ DEFAULT now(),
+  download_count INTEGER DEFAULT 0,
+  last_downloaded_at TIMESTAMPTZ
+);
+
+ALTER TABLE purchased_codebases ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Users can view own purchased codebases" ON purchased_codebases FOR SELECT USING (auth.uid()::text = user_id);
+
+-- ============================================
 -- STORAGE - BUCKETS
 -- ============================================
 INSERT INTO storage.buckets (id, name, public) VALUES
   ('workflows', 'workflows', true),
   ('images', 'images', true),
   ('audio', 'audio', true),
-  ('documents', 'documents', true)
+  ('documents', 'documents', true),
+  ('codebases', 'codebases', false)
 ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
@@ -185,12 +220,14 @@ CREATE POLICY "Public Read workflows" ON storage.objects FOR SELECT USING (bucke
 CREATE POLICY "Public Read images" ON storage.objects FOR SELECT USING (bucket_id = 'images');
 CREATE POLICY "Public Read audio" ON storage.objects FOR SELECT USING (bucket_id = 'audio');
 CREATE POLICY "Public Read documents" ON storage.objects FOR SELECT USING (bucket_id = 'documents');
+CREATE POLICY "Authenticated Read codebases" ON storage.objects FOR SELECT USING (bucket_id = 'codebases' AND auth.role() = 'authenticated');
 
 -- Public upload for authenticated users
 CREATE POLICY "Auth Upload workflows" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'workflows');
 CREATE POLICY "Auth Upload images" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'images');
 CREATE POLICY "Auth Upload audio" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'audio');
 CREATE POLICY "Auth Upload documents" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'documents');
+CREATE POLICY "Auth Upload codebases" ON storage.objects FOR INSERT WITH CHECK (bucket_id = 'codebases' AND auth.role() = 'authenticated');
 
 -- ============================================
 -- ROW LEVEL SECURITY
