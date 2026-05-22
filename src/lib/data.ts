@@ -1,13 +1,17 @@
-import { Phone, Calendar, Home, Utensils, Wrench, FileText, Activity, FileEdit, Mail, MessageSquare, Users, Headphones, BarChart3, MessageCircle, Workflow, Mic, LucideIcon } from "lucide-react";
+import { Phone, Calendar, Home, Utensils, Wrench, FileText, Activity, FileEdit, Mail, MessageSquare, Users, Headphones, BarChart3, MessageCircle, Workflow, Mic, LucideIcon, Code2, Globe, Bot, ShoppingCart, Search, Briefcase, Image, Music, Zap, Brain, Palette, Megaphone, MapPin, TrendingUp, Shield, BarChart2 } from "lucide-react";
+
+export type ProductType = "codebase" | "workflow" | "voice_agent" | "bundle";
+export type ProductCategory = "Codebases" | "Workflows" | "Voice Agents" | "Bundles";
 
 export interface Product {
   id: number;
   name: string;
   slug: string;
-  type: "workflow" | "voice_agent";
-  category: string;
+  type: ProductType;
+  category: ProductCategory;
   niche: string;
   price: number;
+  comparePrice?: number;
   thumbnail: string;
   rating: number;
   reviews: number;
@@ -19,9 +23,231 @@ export interface Product {
   pack?: string;
   icon: LucideIcon;
   color: string;
+  techStack?: string[];
+  demoUrl?: string;
+  githubUrl?: string;
+  licenseType?: string;
+  difficulty?: "beginner" | "intermediate" | "advanced";
+  setupTime?: string;
+  promptText?: string;
 }
 
 export const products: Product[] = [
+  // ═══════════════════════════════════════
+  // CODEBASES (8 products)
+  // ═══════════════════════════════════════
+  {
+    id: 201,
+    name: "TARS-CONVERSA — AI LiveChat Engine",
+    slug: "tars-conversa-ai-livechat",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Development",
+    price: 79,
+    comparePrice: 129,
+    thumbnail: "codebase-tars-conversa.png",
+    rating: 5,
+    reviews: 27,
+    description: "A production-grade, real-time conversational AI platform engineered for seamless live chat experiences. TARS-CONVERSA fuses WebSocket-driven bi-directional communication with context-aware LLM orchestration to deliver sub-200ms response latency. Features persistent conversation memory, multi-session management, intelligent message queuing with optimistic UI updates, and a modular agent architecture that supports pluggable AI backends (OpenAI, Gemini, Claude). Ships with a fully responsive chat interface, typing indicators, read receipts, and a customizable widget SDK for white-label deployment across any domain.",
+    shortDescription: "Real-time AI LiveChat platform with WebSocket architecture & LLM orchestration",
+    features: ["WebSocket bi-directional real-time messaging", "Multi-LLM agent orchestration (OpenAI/Gemini/Claude)", "Persistent conversation memory & session management", "Sub-200ms streaming response pipeline", "Optimistic UI updates with typing indicators & read receipts", "White-label widget SDK for cross-domain deployment"],
+    apps: ["React", "Node.js", "WebSocket", "OpenAI", "Tailwind CSS"],
+    includes: ["Full Source Code (Frontend + Backend)", "Architecture Documentation", "Setup & Deployment Guide", "Widget SDK & Customization Guide", "API Reference"],
+    icon: MessageCircle,
+    color: "bg-violet-500/10 text-violet-400",
+    techStack: ["React", "Node.js", "WebSocket", "OpenAI", "Tailwind CSS"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "intermediate",
+    setupTime: "25 min",
+  },
+  {
+    id: 202,
+    name: "Finflock — Algorithmic Trading Engine",
+    slug: "finflock-algorithmic-trading",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Sales",
+    price: 97,
+    comparePrice: 149,
+    thumbnail: "codebase-finflock.png",
+    rating: 5,
+    reviews: 19,
+    description: "An institutional-grade quantitative finance toolkit that automates the full algorithmic trading pipeline — from raw market data ingestion to strategy backtesting and signal generation. Finflock integrates with Yahoo Finance API for multi-asset historical data retrieval, implements ETL pipelines with Pandas for OHLCV data normalization, computes 20+ technical indicators (SMA, EMA, RSI, MACD, Bollinger Bands), and backtests moving-average crossover strategies with customizable position sizing and slippage models. Generates publication-quality visualization dashboards with Matplotlib/Plotly showing equity curves, drawdown analysis, and risk-adjusted return metrics (Sharpe, Sortino, Calmar ratios).",
+    shortDescription: "Quantitative trading pipeline — data ingestion, indicator computation, backtesting & visualization",
+    features: ["Multi-asset historical data pipeline via Yahoo Finance API", "20+ technical indicator computations (SMA/EMA/RSI/MACD/Bollinger)", "Moving-average crossover strategy backtesting engine", "Equity curve, drawdown & risk-adjusted return analytics", "Publication-quality Plotly/Matplotlib visualization dashboards", "Customizable position sizing & slippage modeling"],
+    apps: ["Python", "Pandas", "Plotly", "Matplotlib", "Yahoo Finance API"],
+    includes: ["Full Source Code", "Quantitative Strategy Documentation", "Jupyter Notebook Tutorials", "Sample Backtest Reports", "Deployment Guide"],
+    icon: BarChart2,
+    color: "bg-emerald-500/10 text-emerald-400",
+    techStack: ["Python", "Pandas", "Plotly", "FastAPI", "NumPy"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "advanced",
+    setupTime: "40 min",
+  },
+  {
+    id: 203,
+    name: "GMaps Scraper — AI Cold Outreach Engine",
+    slug: "gmaps-scraper-ai-outreach",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Sales",
+    price: 127,
+    comparePrice: 197,
+    thumbnail: "codebase-gmaps-scraper.png",
+    rating: 5,
+    reviews: 23,
+    description: "An enterprise-grade lead generation & outreach automation platform built on Flask that combines high-throughput Google Maps business data extraction with LLM-powered hyper-personalized cold email generation. The scraping engine parses Google My Business listings at scale — extracting business names, addresses, phone numbers, websites, ratings, and review counts — while the AI outreach module leverages Gemini to craft context-aware, business-specific cold emails that reference the prospect's actual services and location. Features a pipeline architecture with rate limiting, proxy rotation support, CSV/JSON export, email template customization, and an analytics dashboard for tracking open rates and response rates.",
+    shortDescription: "Enterprise GMB scraper + LLM-powered personalized cold email automation on Flask",
+    features: ["High-throughput Google Maps business listing extraction", "AI-generated hyper-personalized cold emails via Gemini", "Rate limiting & proxy rotation for scalable scraping", "CSV/JSON export with structured business data", "Email template engine with dynamic personalization variables", "Analytics dashboard for outreach campaign tracking"],
+    apps: ["Flask", "Python", "Gemini AI", "BeautifulSoup", "Selenium"],
+    includes: ["Full Source Code (Scraper + Web App + Email Engine)", "API Integration Guide", "Deployment Guide", "Email Template Library", "Sample Campaign Data"],
+    icon: MapPin,
+    color: "bg-green-500/10 text-green-400",
+    techStack: ["Flask", "Python", "Gemini", "Selenium", "BeautifulSoup"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "advanced",
+    setupTime: "45 min",
+  },
+  {
+    id: 204,
+    name: "Hashtric — Marketing Intelligence OS",
+    slug: "hashtric-marketing-intelligence",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Marketing",
+    price: 197,
+    comparePrice: 297,
+    thumbnail: "codebase-hashtric.png",
+    rating: 5,
+    reviews: 14,
+    description: "A full-stack marketing intelligence operating system that compresses the entire paid advertising lifecycle — from trending topic discovery to live ad deployment — into under 60 seconds. Hashtric's 5-step pipeline discovers viral social media trends, generates ad creative using AI, provisions campaigns on Meta Ads and Google Ads via API, and deploys a neutral attribution pixel that tracks every click across all platforms. The cross-platform attribution engine solves the multi-touch attribution problem where platforms over-claim conversions (Meta claims 47 sales, Google claims 39, reality is 23) by implementing a first-party data layer with deterministic matching. Ships with a real-time analytics dashboard showing unbiased conversion truth, ROAS calculations, and channel-level performance breakdowns. Includes both the Next.js web frontend and the Node.js backend API.",
+    shortDescription: "Full-stack marketing OS — trend discovery, AI ad generation, cross-platform attribution & neutral pixel tracking",
+    features: ["5-step pipeline: Trend → Creative → Deploy → Track → Attribute", "One-click Meta Ads & Google Ads campaign provisioning via API", "Neutral attribution pixel for unbiased cross-platform conversion tracking", "Deterministic multi-touch attribution solving platform over-claiming", "Real-time ROAS dashboard with channel-level performance breakdowns", "AI-powered ad creative generation from trending social content"],
+    apps: ["Next.js", "Node.js", "Meta Ads API", "Google Ads API", "Supabase", "Tailwind CSS"],
+    includes: ["Full Source Code (Web Frontend + Backend API)", "Architecture & Attribution Model Documentation", "Pixel Deployment Guide", "API Keys Setup Guide", "Demo Video"],
+    icon: Globe,
+    color: "bg-indigo-500/10 text-indigo-400",
+    techStack: ["Next.js", "Node.js", "Meta Ads API", "Google Ads API", "Supabase"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "advanced",
+    setupTime: "1 hour",
+  },
+  {
+    id: 205,
+    name: "Jobify — Universal ATS Chrome Extension",
+    slug: "jobify-universal-ats-extension",
+    type: "codebase",
+    category: "Codebases",
+    niche: "HR",
+    price: 97,
+    comparePrice: 149,
+    thumbnail: "codebase-jobify-ats.png",
+    rating: 5,
+    reviews: 31,
+    description: "A Manifest V3 Chrome extension that unifies multi-platform recruitment into a single ATS command center. Jobify aggregates candidate profiles from LinkedIn, Internshala, Naukri, and Indeed — extracting structured data (name, email, skills, experience, education) directly from the DOM — and normalizes it into a unified schema compatible with any Applicant Tracking System via REST API integration. Built with a content-script injection architecture that adapts parsers per-platform, it handles dynamic SPAs, infinite scroll pagination, and anti-bot detection patterns. The popup dashboard provides real-time profile count, batch export to CSV/JSON, one-push ATS sync, and duplicate detection. Designed for HR teams who post across 3-4 job platforms and need all candidate data consolidated under one roof.",
+    shortDescription: "Manifest V3 Chrome extension — multi-platform candidate aggregation & ATS sync for LinkedIn, Naukri, Indeed & Internshala",
+    features: ["Multi-platform DOM parsing: LinkedIn, Internshala, Naukri, Indeed", "Manifest V3 architecture with per-platform content script injection", "Structured candidate data extraction into unified ATS-ready schema", "Batch export to CSV/JSON with one-push ATS REST API sync", "Duplicate candidate detection & profile deduplication engine", "SPA-aware scraping with infinite scroll & anti-bot handling"],
+    apps: ["React", "Chrome Extension API (Manifest V3)", "Tailwind CSS", "REST API"],
+    includes: ["Full Source Code", "Chrome Extension Build Guide", "Platform Parser Customization Guide", "ATS Integration API Reference", "Demo Video"],
+    icon: Briefcase,
+    color: "bg-blue-500/10 text-blue-400",
+    techStack: ["React", "Chrome API V3", "Node.js", "Tailwind CSS"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "intermediate",
+    setupTime: "30 min",
+  },
+  {
+    id: 206,
+    name: "AutoStream — Social-to-Lead AI Agent",
+    slug: "autostream-social-lead-agent",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Sales",
+    price: 147,
+    comparePrice: 217,
+    thumbnail: "codebase-autostream.png",
+    rating: 5,
+    reviews: 16,
+    description: "A production-ready autonomous lead capture agent built on LangGraph's stateful multi-step orchestration framework with FAISS-powered Retrieval-Augmented Generation (RAG) for context-grounded conversations. AutoStream ingests social media interactions, indexes conversation history and product knowledge into FAISS vector stores, and orchestrates multi-turn dialogues that intelligently qualify and capture leads. The LangGraph state machine defines conditional edges for lead scoring, objection handling, escalation paths, and CRM data synchronization — enabling the agent to autonomously decide the next best action. Includes tool execution capabilities for external API calls (CRM sync, email dispatch, webhook triggers) and conversation memory that persists across sessions.",
+    shortDescription: "LangGraph + FAISS RAG-powered autonomous social lead capture agent with multi-step orchestration",
+    features: ["LangGraph stateful multi-step agent orchestration", "FAISS vector store for RAG-based context-grounded conversations", "Autonomous lead scoring with conditional edge routing", "Objection handling & intelligent escalation decision trees", "CRM synchronization via tool execution & external API calls", "Cross-session conversation memory & lead state persistence"],
+    apps: ["LangGraph", "FAISS", "OpenAI", "Python", "FastAPI"],
+    includes: ["Full Source Code", "LangGraph Workflow Architecture Docs", "FAISS Index Setup Guide", "Prompt Engineering Playbook", "CRM Integration Guide"],
+    icon: Bot,
+    color: "bg-amber-500/10 text-amber-400",
+    techStack: ["LangGraph", "FAISS", "Python", "OpenAI", "FastAPI"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "advanced",
+    setupTime: "50 min",
+  },
+  {
+    id: 207,
+    name: "Resumod — ATS Resume Optimizer Extension",
+    slug: "resumod-ats-optimizer-extension",
+    type: "codebase",
+    category: "Codebases",
+    niche: "HR",
+    price: 67,
+    comparePrice: 99,
+    thumbnail: "codebase-resumod.png",
+    rating: 5,
+    reviews: 34,
+    description: "A Manifest V3 Chrome extension that provides end-to-end ATS optimization — from real-time compatibility scoring to one-click resume regeneration. Resumod injects directly into LinkedIn, Internshala, and Naukri job listing pages, extracting the job description from the DOM and cross-referencing it against the user's uploaded resume using NLP-powered keyword matching, semantic similarity scoring, and section-level gap analysis. It generates a granular ATS compatibility score (0-100) broken down by skills match, experience relevance, education alignment, and keyword density. The AI optimization engine then restructures the resume — reordering sections, injecting missing keywords, rewriting bullet points for impact, and formatting for ATS parser compatibility — with a one-click download of the production-ready, ATS-optimized resume.",
+    shortDescription: "Manifest V3 Chrome extension — real-time ATS scoring, AI resume rewriting & one-click optimized download",
+    features: ["DOM-injected JD extraction from LinkedIn, Internshala, Naukri", "NLP-powered keyword matching & semantic similarity analysis", "Granular ATS compatibility score (0-100) with section-level breakdown", "AI resume restructuring — keyword injection, bullet rewriting, section reordering", "One-click ATS-optimized resume download in production format", "ATS parser compatibility formatting (columns, fonts, parsing hints)"],
+    apps: ["React", "Chrome Extension API (Manifest V3)", "OpenAI", "Tailwind CSS"],
+    includes: ["Full Source Code", "Chrome Extension Build Guide", "ATS Scoring Algorithm Documentation", "Resume Template Pack", "Demo Video"],
+    icon: FileEdit,
+    color: "bg-rose-500/10 text-rose-400",
+    techStack: ["React", "Chrome API V3", "OpenAI", "Tailwind CSS", "NLP"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "intermediate",
+    setupTime: "20 min",
+  },
+  {
+    id: 208,
+    name: "Trend Analyzer — Social Threat Intelligence",
+    slug: "trend-analyzer-threat-intelligence",
+    type: "codebase",
+    category: "Codebases",
+    niche: "Media",
+    price: 149,
+    comparePrice: 219,
+    thumbnail: "codebase-trend-analyzer.png",
+    rating: 5,
+    reviews: 11,
+    description: "A full-stack social media threat intelligence platform that combines real-time trend visualization with automated hate speech detection and coordinated campaign monitoring. Built on Next.js with Convex as the real-time backend, the system continuously ingests Twitter/X data streams, runs NLP-powered sentiment and toxicity classification, and renders interactive geo heatmaps showing the geographic spread of harmful narratives. The AI analysis engine detects coordinated inauthentic behavior patterns — bot clusters, astroturfing campaigns, and brigading — and generates automated threat reports. Features Clerk-authenticated dashboards with role-based access, automated scanning schedules, trend anomaly detection using statistical process control, and webhook alerts for escalation to moderation teams.",
+    shortDescription: "Full-stack social threat intelligence — real-time geo heatmaps, hate speech detection & coordinated campaign monitoring",
+    features: ["Real-time Twitter/X data ingestion with continuous stream processing", "NLP-powered sentiment analysis & toxicity classification pipeline", "Interactive geo heatmaps for harmful narrative geographic spread", "Coordinated inauthentic behavior detection (bot clusters, astroturfing)", "Statistical anomaly detection for trend deviation alerts", "Clerk-authenticated dashboards with role-based access & webhook escalation"],
+    apps: ["Next.js", "React", "Convex", "Clerk", "NLP"],
+    includes: ["Full Source Code", "Architecture & Data Flow Documentation", "Convex Schema & Migration Guide", "NLP Model Setup Guide", "Deployment Guide"],
+    icon: TrendingUp,
+    color: "bg-red-500/10 text-red-400",
+    techStack: ["Next.js", "React", "Convex", "Clerk", "Tailwind CSS"],
+    githubUrl: "#",
+    demoUrl: "#",
+    licenseType: "commercial",
+    difficulty: "advanced",
+    setupTime: "50 min",
+  },
+
+  // ═══════════════════════════════════════
+  // VOICE AGENTS (7 products)
+  // ═══════════════════════════════════════
   {
     id: 1,
     name: "Plumber Voice Agent",
@@ -29,7 +255,7 @@ export const products: Product[] = [
     type: "voice_agent",
     category: "Voice Agents",
     niche: "Plumbing",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_01_plumber.png",
     rating: 5,
     reviews: 12,
@@ -40,7 +266,10 @@ export const products: Product[] = [
     includes: ["Retell Agent JSON", "n8n Workflow JSON", "Prompt Template", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Phone,
-    color: "bg-blue-50 text-blue-600"
+    color: "bg-blue-500/10 text-blue-400",
+    difficulty: "intermediate",
+    setupTime: "< 15 min",
+    promptText: "You are a professional plumbing dispatch agent. Your job is to:\n1. Greet the caller warmly and professionally\n2. Determine if this is an emergency (burst pipe, flooding, gas leak) or general inquiry\n3. Collect: name, phone, address, description of issue\n4. For emergencies: immediately dispatch and notify the on-call technician via Slack\n5. For general inquiries: schedule an appointment and send SMS confirmation\n6. Always be empathetic and reassuring, especially during emergencies.",
   },
   {
     id: 2,
@@ -49,7 +278,7 @@ export const products: Product[] = [
     type: "voice_agent",
     category: "Voice Agents",
     niche: "Dental",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_02_dental.png",
     rating: 5,
     reviews: 8,
@@ -60,7 +289,10 @@ export const products: Product[] = [
     includes: ["Retell Agent JSON", "n8n Workflow JSON", "Scheduling Logic", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Calendar,
-    color: "bg-emerald-50 text-emerald-600"
+    color: "bg-emerald-500/10 text-emerald-400",
+    difficulty: "intermediate",
+    setupTime: "< 15 min",
+    promptText: "You are a friendly dental office receptionist AI. Your responsibilities:\n1. Greet the caller and ask how you can help\n2. For new patients: collect name, phone, email, insurance provider\n3. For existing patients: look up by name or phone\n4. Offer available appointment slots from Cal.com integration\n5. Confirm the appointment and send SMS confirmation\n6. Answer basic questions about services, hours, and location\n7. Always maintain a warm, professional bedside manner.",
   },
   {
     id: 3,
@@ -69,7 +301,7 @@ export const products: Product[] = [
     type: "voice_agent",
     category: "Voice Agents",
     niche: "Real Estate",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_03_realestate.png",
     rating: 4,
     reviews: 15,
@@ -80,7 +312,10 @@ export const products: Product[] = [
     includes: ["Retell Agent JSON", "CRM Sync Workflow", "Scoring Logic", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Home,
-    color: "bg-indigo-50 text-indigo-600"
+    color: "bg-indigo-500/10 text-indigo-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a real estate lead qualification agent. Your job:\n1. Greet the lead and introduce yourself as the AI assistant for [Agency Name]\n2. Ask about their real estate needs: buying/selling/renting\n3. Collect key qualifying info: budget range, desired location, timeline, property type\n4. Ask if they're pre-approved for a mortgage\n5. Score the lead based on: budget realism, timeline urgency, pre-approval status\n6. For hot leads: offer to schedule a call with an agent immediately\n7. Sync all data to CRM via webhook",
   },
   {
     id: 4,
@@ -89,7 +324,7 @@ export const products: Product[] = [
     type: "voice_agent",
     category: "Voice Agents",
     niche: "Restaurant",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_04_restaurant.png",
     rating: 5,
     reviews: 22,
@@ -100,7 +335,10 @@ export const products: Product[] = [
     includes: ["WhatsApp Bot Workflow", "Price Engine", "Stripe Integration", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Utensils,
-    color: "bg-amber-50 text-amber-600"
+    color: "bg-amber-500/10 text-amber-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a restaurant order-taking agent for WhatsApp. Your job:\n1. Welcome the customer and share today's menu highlights\n2. Take their order item by item, including quantities and modifications\n3. Calculate the total including tax and delivery fees\n4. Confirm the order back to the customer\n5. Ask for delivery address and phone number\n6. Process payment via Stripe or note cash on delivery\n7. Send order confirmation with estimated delivery time\n8. Handle special dietary requests and allergen questions",
   },
   {
     id: 5,
@@ -109,7 +347,7 @@ export const products: Product[] = [
     type: "voice_agent",
     category: "Voice Agents",
     niche: "HVAC",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_05_hvac.png",
     rating: 5,
     reviews: 7,
@@ -120,16 +358,19 @@ export const products: Product[] = [
     includes: ["VAPI Agent JSON", "Dispatch Workflow", "Slack Alerts", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Wrench,
-    color: "bg-rose-50 text-rose-600"
+    color: "bg-rose-500/10 text-rose-400",
+    difficulty: "intermediate",
+    setupTime: "< 15 min",
+    promptText: "You are an HVAC emergency dispatch agent. Your critical responsibilities:\n1. Greet the caller and assess urgency immediately\n2. Emergency indicators: no AC in extreme heat, gas smell, complete system failure\n3. Collect: name, address, phone, system type, issue description\n4. For emergencies: immediately page on-call technician and send Slack alert\n5. For routine issues: schedule next available appointment\n6. Provide safety tips while waiting (e.g., 'Check your thermostat batteries')\n7. Send SMS confirmation with technician ETA for emergencies",
   },
   {
     id: 6,
     name: "Cleaning Service Quote",
     slug: "cleaning-service-quote",
-    type: "workflow",
-    category: "Workflows",
+    type: "voice_agent",
+    category: "Voice Agents",
     niche: "Cleaning",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_06_cleaning.png",
     rating: 4,
     reviews: 19,
@@ -140,16 +381,19 @@ export const products: Product[] = [
     includes: ["Price Calculator Workflow", "PDF Template", "Email Templates", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: FileText,
-    color: "bg-cyan-50 text-cyan-600"
+    color: "bg-cyan-500/10 text-cyan-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a cleaning service quoting agent. Your job:\n1. Greet the potential customer warmly\n2. Ask about property type: residential/commercial\n3. Collect: square footage, number of rooms/bathrooms, frequency (one-time/weekly/bi-weekly)\n4. Ask about special requests: deep cleaning, windows, carpets, move-in/out\n5. Calculate an instant quote based on the pricing matrix\n6. Offer to email a professional PDF quote immediately\n7. Ask if they'd like to book the service right away\n8. Send booking confirmation via SMS",
   },
   {
     id: 7,
     name: "Fitness Coach Follow-Up",
     slug: "fitness-coach-followup",
-    type: "workflow",
-    category: "Workflows",
+    type: "voice_agent",
+    category: "Voice Agents",
     niche: "Fitness",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_07_fitness.png",
     rating: 5,
     reviews: 11,
@@ -160,8 +404,15 @@ export const products: Product[] = [
     includes: ["Retention Workflow", "SMS Templates", "Goal Tracking Logic", "Setup Guide"],
     pack: "Niche Voice Agents Pack",
     icon: Activity,
-    color: "bg-green-50 text-green-600"
+    color: "bg-green-500/10 text-green-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a fitness coach follow-up agent. Your job:\n1. Check client's last workout date from the database\n2. If gap > 3 days: send encouraging SMS\n3. If gap > 7 days: send email with workout suggestions and a 'we miss you' message\n4. If gap > 14 days: flag for personal coach call\n5. For active clients: send weekly progress summary\n6. Celebrate milestones (10th session, 30-day streak, etc.)\n7. Always maintain a motivating, positive tone\n8. Include relevant tips based on their fitness goals",
   },
+
+  // ═══════════════════════════════════════
+  // WORKFLOWS (8 products)
+  // ═══════════════════════════════════════
   {
     id: 8,
     name: "Content Repurposing",
@@ -169,7 +420,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Marketing",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_08_content.png",
     rating: 5,
     reviews: 34,
@@ -180,7 +431,10 @@ export const products: Product[] = [
     includes: ["Repurposing Workflow", "AI Prompt Library", "Social Templates", "Setup Guide"],
     pack: "AI Marketing Pack",
     icon: FileEdit,
-    color: "bg-indigo-50 text-indigo-600"
+    color: "bg-indigo-500/10 text-indigo-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a content repurposing specialist. Given a blog post or video transcript:\n1. Extract the top 5 key insights\n2. Generate a 10-tweet Twitter thread with a hook\n3. Create a professional LinkedIn post (1300 chars max)\n4. Write an Instagram caption with emojis and hashtags\n5. Draft a 30-second TikTok script\n6. Create a newsletter summary (200 words)\n7. Generate 3 quote cards text\nMaintain the original brand voice throughout.",
   },
   {
     id: 9,
@@ -189,7 +443,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Marketing",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_09_leadmagnet.png",
     rating: 4,
     reviews: 28,
@@ -200,7 +454,10 @@ export const products: Product[] = [
     includes: ["Generator Workflow", "PDF Generator", "Brand Voice Settings", "Setup Guide"],
     pack: "AI Marketing Pack",
     icon: Mail,
-    color: "bg-rose-50 text-rose-600"
+    color: "bg-rose-500/10 text-rose-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a lead magnet creation specialist. Given a topic and target audience:\n1. Research the top pain points for this audience\n2. Generate a compelling title with a clear value proposition\n3. Create a structured outline (Introduction, 5 Key Sections, Conclusion)\n4. Write the full content with actionable takeaways\n5. Include worksheets, checklists, or templates where appropriate\n6. Add a CTA section linking to the main product/service\n7. Format for PDF output with professional styling",
   },
   {
     id: 10,
@@ -209,7 +466,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Marketing",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_11_coldemail.png",
     rating: 4,
     reviews: 16,
@@ -220,7 +477,10 @@ export const products: Product[] = [
     includes: ["Outreach Workflow", "Scraping Logic", "Prompt Library", "Setup Guide"],
     pack: "AI Marketing Pack",
     icon: MessageSquare,
-    color: "bg-violet-50 text-violet-600"
+    color: "bg-violet-500/10 text-violet-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a cold email personalization expert. Given a prospect's LinkedIn profile:\n1. Extract: recent posts, job title, company, achievements, interests\n2. Identify 2-3 personalization hooks (shared interests, recent news, mutual connections)\n3. Write a 3-paragraph email:\n   - Opening: personalized hook referencing their specific context\n   - Body: value proposition tailored to their role and company\n   - CTA: low-friction ask (15-min call, reply with interest)\n4. Generate 3 subject line variants (curiosity, benefit, personal)\n5. Keep total email under 150 words\n6. Maintain a professional but conversational tone",
   },
   {
     id: 11,
@@ -229,7 +489,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Business",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_10_meeting.png",
     rating: 5,
     reviews: 45,
@@ -240,7 +500,10 @@ export const products: Product[] = [
     includes: ["Summary Workflow", "Action Item Parser", "Email Templates", "Setup Guide"],
     pack: "Business Operations Pack",
     icon: Users,
-    color: "bg-amber-50 text-amber-600"
+    color: "bg-amber-500/10 text-amber-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a meeting summarization agent. Given a meeting transcript:\n1. Generate a concise summary (max 200 words)\n2. Extract all action items with assigned owners and deadlines\n3. List key decisions made during the meeting\n4. Identify any open questions or unresolved topics\n5. Analyze overall sentiment and energy level\n6. Highlight any risks or blockers mentioned\n7. Format output as: Summary → Decisions → Action Items → Open Questions → Sentiment",
   },
   {
     id: 12,
@@ -249,7 +512,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Support",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_12_support.png",
     rating: 5,
     reviews: 21,
@@ -260,7 +523,10 @@ export const products: Product[] = [
     includes: ["Routing Workflow", "Sentiment Engine", "Slack Integration", "Setup Guide"],
     pack: "Business Operations Pack",
     icon: Headphones,
-    color: "bg-teal-50 text-teal-600"
+    color: "bg-teal-500/10 text-teal-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a support ticket classification and routing agent. Given a support ticket:\n1. Classify the category: billing, technical, feature request, bug, account, other\n2. Assess urgency: critical (site down), high (feature broken), medium (issue), low (question)\n3. Analyze sentiment: angry, frustrated, neutral, happy\n4. For simple queries (password reset, FAQ): generate auto-reply\n5. For complex issues: route to appropriate team with priority tag\n6. Auto-resolve ~40% of common questions\n7. Escalate angry/critical tickets immediately to senior support",
   },
   {
     id: 13,
@@ -269,7 +535,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Business",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_13_price.png",
     rating: 4,
     reviews: 9,
@@ -280,7 +546,10 @@ export const products: Product[] = [
     includes: ["Monitoring Workflow", "Price Scraper", "Alert Logic", "Setup Guide"],
     pack: "Business Operations Pack",
     icon: BarChart3,
-    color: "bg-orange-50 text-orange-600"
+    color: "bg-orange-500/10 text-orange-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a competitor price monitoring agent. Given scraped pricing data:\n1. Compare current prices against historical averages\n2. Identify significant price changes (>5% movement)\n3. Detect pricing patterns (sales cycles, seasonal trends)\n4. Generate market insight summary\n5. Alert on competitor out-of-stock situations\n6. Recommend pricing adjustments based on market position\n7. Send formatted Slack alert with: change summary, trend chart, recommendation",
   },
   {
     id: 14,
@@ -289,7 +558,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "HR",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_14_resume.png",
     rating: 5,
     reviews: 33,
@@ -299,8 +568,11 @@ export const products: Product[] = [
     apps: ["Gemini", "Resend", "Supabase", "n8n"],
     includes: ["Screening Workflow", "Ranking Logic", "Interview Generator", "Setup Guide"],
     pack: "Business Operations Pack",
-    icon: FileText,
-    color: "bg-violet-50 text-violet-600"
+    icon: Bot,
+    color: "bg-violet-500/10 text-violet-400",
+    difficulty: "intermediate",
+    setupTime: "15-30 min",
+    promptText: "You are a resume screening agent. Given a resume and job description:\n1. Score the candidate 0-100 based on: skills match, experience relevance, education, certifications\n2. Extract key qualifications that match the job requirements\n3. Identify skill gaps or areas of concern\n4. Generate 5 targeted interview questions based on their background\n5. Write a brief assessment summary (pros, cons, recommendation)\n6. Auto-email candidates scoring >80 with interview invitation\n7. Auto-reject candidates scoring <40 with a polite rejection email",
   },
   {
     id: 15,
@@ -309,7 +581,7 @@ export const products: Product[] = [
     type: "workflow",
     category: "Workflows",
     niche: "Marketing",
-    price: 29,
+    price: 19,
     thumbnail: "wf_diagram_15_social.png",
     rating: 4,
     reviews: 27,
@@ -320,8 +592,52 @@ export const products: Product[] = [
     includes: ["Responder Workflow", "Sentiment Filter", "Brand Voice Profile", "Setup Guide"],
     pack: "Business Operations Pack",
     icon: MessageCircle,
-    color: "bg-rose-50 text-rose-600"
+    color: "bg-rose-500/10 text-rose-400",
+    difficulty: "beginner",
+    setupTime: "< 15 min",
+    promptText: "You are a social media comment response agent. Given a social media comment:\n1. Analyze sentiment: positive, neutral, negative, question, complaint\n2. Determine response strategy based on sentiment\n3. For positive comments: thank + reinforce brand message\n4. For questions: provide helpful, accurate answer\n5. For complaints: empathize + offer solution + move to DM if needed\n6. For neutral: engage with a relevant follow-up question\n7. Include subtle CTA when appropriate (link in bio, DM us, etc.)\n8. Always match the brand voice defined in the profile\n9. Never be defensive or argumentative",
   },
 ];
 
 export const getProductBySlug = (slug: string) => products.find(p => p.slug === slug);
+export const getProductsByType = (type: ProductType) => products.filter(p => p.type === type);
+export const getProductsByCategory = (category: ProductCategory) => products.filter(p => p.category === category);
+export const getFeaturedProducts = () => products.filter(p => p.rating >= 5 || p.comparePrice);
+
+export const productPacks = [
+  {
+    name: "Starter Codebase Pack",
+    slug: "starter-codebase-pack",
+    price: 127,
+    originalPrice: 243,
+    description: "3 codebases to kickstart your AI product portfolio",
+    items: ["TARS-CONVERSA AI LiveChat Engine", "Jobify Universal ATS Extension", "Resumod ATS Resume Optimizer"],
+    savings: "Save $116",
+    priceId: "starter-codebase",
+    color: "from-amber-500 to-orange-500",
+    popular: false,
+    type: "codebase" as ProductType,
+  },
+];
+
+export const subscriptionTiers = [
+  {
+    name: "Pro",
+    slug: "pro",
+    price: 350,
+    period: "one-time",
+    description: "Access all codebases and workflows — one simple price",
+    features: [
+      "All 8 production-ready codebases",
+      "All 15 AI-powered workflows & voice agents",
+      "Full source code with documentation",
+      "Instant download after purchase",
+      "Lifetime access to purchased files",
+      "Commercial license included",
+      "Priority support included",
+    ],
+    cta: "Get All Access",
+    popular: true,
+    priceId: "pro-plan-placeholder",
+  },
+];
