@@ -9,21 +9,23 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#FFFFFF",
-        surface: "#F8FAFC", // Slate 50
-        "surface-hover": "#F1F5F9", // Slate 100
+        background: "#0B0F1A",
+        surface: "rgba(17, 24, 39, 0.6)",
+        "surface-solid": "#111827",
+        "surface-hover": "rgba(26, 34, 54, 0.8)",
         primary: {
-          DEFAULT: "#6366F1", // Indigo 500
-          hover: "#4F46E5", // Indigo 600
-          light: "#EEF2FF", // Indigo 50
+          DEFAULT: "#F59E0B",
+          hover: "#FBBF24",
+          light: "#FEF3C7",
+          glow: "rgba(245, 158, 11, 0.3)",
         },
         accent: {
-          DEFAULT: "#F59E0B", // Amber 500
-          hover: "#D97706", // Amber 600
-          light: "#FFFBEB", // Amber 50
+          DEFAULT: "#6366F1",
+          hover: "#818CF8",
+          light: "#EEF2FF",
         },
-        success: "#10B981", // Emerald 500
-        error: "#EF4444", // Rose 500
+        success: "#10B981",
+        error: "#EF4444",
         neutral: {
           50: "#F8FAFC",
           100: "#F1F5F9",
@@ -35,16 +37,21 @@ const config: Config = {
           700: "#334155",
           800: "#1E293B",
           900: "#0F172A",
+          950: "#0B0F1A",
         },
         text: {
-          primary: "#1E293B", // Slate 800
-          secondary: "#475569", // Slate 600
-          muted: "#64748B", // Slate 500
+          primary: "#F9FAFB",
+          secondary: "#9CA3AF",
+          muted: "#6B7280",
+        },
+        border: {
+          DEFAULT: "rgba(255, 255, 255, 0.08)",
+          hover: "rgba(245, 158, 11, 0.3)",
         },
       },
       fontFamily: {
         sans: ["Inter", "system-ui", "sans-serif"],
-        display: ["Space Grotesk", "system-ui", "sans-serif"],
+        display: ["Inter", "system-ui", "sans-serif"],
         mono: ["JetBrains Mono", "monospace"],
       },
       borderRadius: {
@@ -57,6 +64,7 @@ const config: Config = {
         "float": "float 3s ease-in-out infinite",
         "count-up": "count-up 2s ease-out forwards",
         "pulse-glow": "pulse-glow 2s ease-in-out infinite",
+        "shimmer": "shimmer 2s linear infinite",
       },
       keyframes: {
         "mesh-drift": {
@@ -70,6 +78,10 @@ const config: Config = {
         "pulse-glow": {
           "0%, 100%": { opacity: "0.5" },
           "50%": { opacity: "1" },
+        },
+        shimmer: {
+          "0%": { backgroundPosition: "-200% 0" },
+          "100%": { backgroundPosition: "200% 0" },
         },
       },
       backdropBlur: {
