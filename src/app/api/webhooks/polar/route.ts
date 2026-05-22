@@ -15,46 +15,97 @@ const CONTACTS_EMAIL = "Intelligence Repo <orders@intelligencerepo.ai>";
 const ADMIN_EMAIL = "support@intelligencerepo.ai";
 
 const PRODUCT_DETAILS: Record<string, { name: string; files: string[] }> = {
-  "niche-voice-agents-pack": {
-    name: "Niche Voice Agents Pack",
+  // Individual Codebases (8 products)
+  "tars-conversa-ai-livechat": {
+    name: "TARS-CONVERSA — AI LiveChat Engine",
     files: [
-      "Plumber Voice Agent - n8n JSON + Setup Guide",
-      "Dental Appointment Booking - n8n JSON + Setup Guide",
-      "Real Estate Lead Qualification - n8n JSON + Setup Guide",
-      "Restaurant WhatsApp Order - n8n JSON + Setup Guide",
-      "HVAC Emergency Dispatch - n8n JSON + Setup Guide",
-      "Cleaning Service Quote - n8n JSON + Setup Guide",
-      "Fitness Coach Follow-Up - n8n JSON + Setup Guide",
+      "TARS-CONVERSA Full Source Code (Frontend + Backend)",
+      "Architecture Documentation",
+      "Widget SDK & Customization Guide",
+      "API Reference & Setup Guide",
     ],
   },
-  "ai-marketing-pack": {
-    name: "AI Marketing Pack",
+  "finflock-algorithmic-trading": {
+    name: "Finflock — Algorithmic Trading Engine",
     files: [
-      "Content Repurposing Workflow - n8n JSON + Setup Guide",
-      "Lead Magnet Generator - n8n JSON + Setup Guide",
-      "Cold Email Personalizer - n8n JSON + Setup Guide",
+      "Finflock Full Source Code",
+      "Jupyter Notebook Tutorials",
+      "Quantitative Strategy Documentation",
+      "Sample Backtest Reports & Deployment Guide",
     ],
   },
-  "business-operations-pack": {
-    name: "Business Operations Pack",
+  "gmaps-scraper-ai-outreach": {
+    name: "GMaps Scraper — AI Cold Outreach Engine",
     files: [
-      "Meeting Summarizer - n8n JSON + Setup Guide",
-      "Support Ticket Router - n8n JSON + Setup Guide",
-      "Competitor Price Monitor - n8n JSON + Setup Guide",
-      "Resume Screening - n8n JSON + Setup Guide",
-      "Social Comment Responder - n8n JSON + Setup Guide",
+      "GMaps Scraper Full Source Code (Scraper + Web App + Email Engine)",
+      "API Integration Guide",
+      "Email Template Library",
+      "Deployment Guide & Sample Campaign Data",
     ],
   },
-  "master-bundle": {
-    name: "Master Bundle - All 15 Workflows",
+  "hashtric-marketing-intelligence": {
+    name: "Hashtric — Marketing Intelligence OS",
     files: [
-      "All 15 n8n Workflows",
-      "All Voice Agent Kits",
-      "All Setup Guides",
-      "Future Updates",
-      "Commercial License",
+      "Hashtric Full Source Code (Web Frontend + Backend API)",
+      "Architecture & Attribution Model Documentation",
+      "Pixel Deployment Guide",
+      "API Keys Setup Guide",
     ],
   },
+  "jobify-universal-ats-extension": {
+    name: "Jobify — Universal ATS Chrome Extension",
+    files: [
+      "Jobify Full Source Code",
+      "Chrome Extension Build (Ready-to-install .crx)",
+      "Platform Parser Customization Guide",
+      "ATS Integration API Reference",
+    ],
+  },
+  "autostream-social-lead-agent": {
+    name: "AutoStream — Social-to-Lead AI Agent",
+    files: [
+      "AutoStream Full Source Code",
+      "LangGraph Workflow Architecture Docs",
+      "FAISS Index Setup Guide",
+      "Prompt Engineering Playbook & CRM Integration Guide",
+    ],
+  },
+  "resumod-ats-optimizer-extension": {
+    name: "Resumod — ATS Resume Optimizer Extension",
+    files: [
+      "Resumod Full Source Code",
+      "Chrome Extension Build (Ready-to-install .crx)",
+      "ATS Scoring Algorithm Documentation",
+      "Resume Template Pack",
+    ],
+  },
+  "trend-analyzer-threat-intelligence": {
+    name: "Trend Analyzer — Social Threat Intelligence",
+    files: [
+      "Trend Analyzer Full Source Code",
+      "Architecture & Data Flow Documentation",
+      "Convex Schema & Migration Guide",
+      "NLP Model Setup & Deployment Guide",
+    ],
+  },
+  // Individual Workflows & Voice Agents ($19)
+  "plumber-voice-agent": { name: "Plumber Voice Agent", files: ["Plumber Voice Agent - n8n JSON + Setup Guide"] },
+  "dental-appointment-booking": { name: "Dental Appointment Booking", files: ["Dental Appointment Booking - n8n JSON + Setup Guide"] },
+  "real-estate-lead-qualification": { name: "Real Estate Lead Qualification", files: ["Real Estate Lead Qualification - n8n JSON + Setup Guide"] },
+  "restaurant-whatsapp-order": { name: "Restaurant WhatsApp Order", files: ["Restaurant WhatsApp Order - n8n JSON + Setup Guide"] },
+  "hvac-emergency-dispatch": { name: "HVAC Emergency Dispatch", files: ["HVAC Emergency Dispatch - n8n JSON + Setup Guide"] },
+  "cleaning-service-quote": { name: "Cleaning Service Quote", files: ["Cleaning Service Quote - n8n JSON + Setup Guide"] },
+  "fitness-coach-followup": { name: "Fitness Coach Follow-Up", files: ["Fitness Coach Follow-Up - n8n JSON + Setup Guide"] },
+  "content-repurposing": { name: "Content Repurposing", files: ["Content Repurposing Workflow - n8n JSON + Setup Guide"] },
+  "lead-magnet-generator": { name: "Lead Magnet Generator", files: ["Lead Magnet Generator - n8n JSON + Setup Guide"] },
+  "cold-email-personalizer": { name: "Cold Email Personalizer", files: ["Cold Email Personalizer - n8n JSON + Setup Guide"] },
+  "meeting-summarizer": { name: "Meeting Summarizer", files: ["Meeting Summarizer - n8n JSON + Setup Guide"] },
+  "support-ticket-router": { name: "Support Ticket Router", files: ["Support Ticket Router - n8n JSON + Setup Guide"] },
+  "competitor-price-monitor": { name: "Competitor Price Monitor", files: ["Competitor Price Monitor - n8n JSON + Setup Guide"] },
+  "resume-screening": { name: "Resume Screening", files: ["Resume Screening - n8n JSON + Setup Guide"] },
+  "social-comment-responder": { name: "Social Comment Responder", files: ["Social Comment Responder - n8n JSON + Setup Guide"] },
+  // Complete Bundle
+  "complete-bundle": { name: "Complete Bundle — All Access", files: ["All 8 Codebases", "All 15 Workflows & Voice Agents", "White-Label Rights", "Lifetime Updates", "Commercial License"] },
 };
 
 export async function POST(req: NextRequest) {
