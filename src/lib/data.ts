@@ -30,6 +30,8 @@ export interface Product {
   difficulty?: "beginner" | "intermediate" | "advanced";
   setupTime?: string;
   promptText?: string;
+  polarPriceId?: string;
+  polarCheckoutUrl?: string;
 }
 
 export const products: Product[] = [
@@ -270,6 +272,7 @@ export const products: Product[] = [
     difficulty: "intermediate",
     setupTime: "< 15 min",
     promptText: "You are a professional plumbing dispatch agent. Your job is to:\n1. Greet the caller warmly and professionally\n2. Determine if this is an emergency (burst pipe, flooding, gas leak) or general inquiry\n3. Collect: name, phone, address, description of issue\n4. For emergencies: immediately dispatch and notify the on-call technician via Slack\n5. For general inquiries: schedule an appointment and send SMS confirmation\n6. Always be empathetic and reassuring, especially during emergencies.",
+    polarCheckoutUrl: "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0",
   },
   {
     id: 2,
@@ -293,6 +296,7 @@ export const products: Product[] = [
     difficulty: "intermediate",
     setupTime: "< 15 min",
     promptText: "You are a friendly dental office receptionist AI. Your responsibilities:\n1. Greet the caller and ask how you can help\n2. For new patients: collect name, phone, email, insurance provider\n3. For existing patients: look up by name or phone\n4. Offer available appointment slots from Cal.com integration\n5. Confirm the appointment and send SMS confirmation\n6. Answer basic questions about services, hours, and location\n7. Always maintain a warm, professional bedside manner.",
+    polarCheckoutUrl: "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0",
   },
   {
     id: 3,

@@ -161,9 +161,20 @@ export default function ProductDetailPage() {
                     <span className="text-xs font-medium text-text-muted">Instant Download</span>
                   </div>
                 </div>
-                <button onClick={handlePurchase} disabled={purchasing} className="btn-primary w-full py-5 flex items-center justify-center gap-3 text-lg group disabled:opacity-50">
-                  {purchasing ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" /> Purchase & Download</>}
-                </button>
+                {product.polarCheckoutUrl ? (
+                    <a
+                      href={product.polarCheckoutUrl}
+                      data-polar-checkout
+                      data-polar-checkout-theme="dark"
+                      className="btn-primary w-full py-5 flex items-center justify-center gap-3 text-lg group no-underline"
+                    >
+                      <Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" /> Purchase & Download
+                    </a>
+                  ) : (
+                    <button onClick={handlePurchase} disabled={purchasing} className="btn-primary w-full py-5 flex items-center justify-center gap-3 text-lg group disabled:opacity-50">
+                      {purchasing ? <Loader2 className="w-6 h-6 animate-spin" /> : <><Download className="w-6 h-6 group-hover:translate-y-1 transition-transform" /> Purchase & Download</>}
+                    </button>
+                  )}
                 {product.demoUrl && (
                   <Link href={product.demoUrl} className="mt-3 btn-secondary w-full py-4 flex items-center justify-center gap-2 text-sm">
                     <ExternalLink className="w-4 h-4" /> View Live Demo
