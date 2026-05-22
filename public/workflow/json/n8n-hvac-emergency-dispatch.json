@@ -1,0 +1,250 @@
+{
+  "name": "HVAC - Emergency Dispatch System",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hvac-emergency",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-hvac-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst isEmergency = (body.issue_type || '').toLowerCase().includes('emergency') || \n                    (body.urgency || '') === 'urgent' ||\n                    (body.temperature || 70) > 95 ||\n                    (body.temperature || 70) < 50;\nreturn [{\n  json: {\n    customer_name: body.customer_name || '',\n    customer_phone: body.customer_phone || '',\n    address: body.address || '',\n    issue_type: body.issue_type || '',\n    urgency: isEmergency ? 'emergency' : (body.urgency || 'normal'),\n    temperature: body.temperature || null,\n    system_type: body.system_type || 'unknown',\n    preferred_time: body.preferred_time || 'asap',\n    is_emergency: isEmergency\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-hvac-002",
+      "name": "Parse & Classify Emergency"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": false,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cond-emergency",
+                    "leftValue": "={{ $json.is_emergency }}",
+                    "rightValue": "true",
+                    "operator": {
+                      "type": "boolean",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "switch-hvac-003",
+      "name": "Emergency Check"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_SID/Calls.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic YOUR_TWILIO_AUTH"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "YOUR_TECHNICIAN_PHONE"
+            },
+            {
+              "name": "From",
+              "value": "YOUR_TWILIO_NUMBER"
+            },
+            {
+              "name": "Url",
+              "value": "https://handler.twilio.com/twiml/EH_YOUR_TWIML_HANDLER"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        100
+      ],
+      "id": "twilio-call-004",
+      "name": "Call Technician"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"text\": \"\ud83d\udd25 HVAC EMERGENCY!\\nCustomer: \" + $json.customer_name + \"\\nPhone: \" + $json.customer_phone + \"\\nAddress: \" + $json.address + \"\\nIssue: \" + $json.issue_type + \"\\nTemp: \" + $json.temperature + \"\u00b0F\\nTechnician has been called!\"\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        100
+      ],
+      "id": "slack-emergency-005",
+      "name": "Slack Emergency Alert"
+    },
+    {
+      "parameters": {
+        "tableId": "hvac_tickets",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "address",
+              "fieldValue": "={{ $json.address }}"
+            },
+            {
+              "fieldId": "issue_type",
+              "fieldValue": "={{ $json.issue_type }}"
+            },
+            {
+              "fieldId": "urgency",
+              "fieldValue": "={{ $json.urgency }}"
+            },
+            {
+              "fieldId": "temperature",
+              "fieldValue": "={{ $json.temperature }}"
+            },
+            {
+              "fieldId": "system_type",
+              "fieldValue": "={{ $json.system_type }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.is_emergency ? 'emergency_dispatched' : 'scheduled' }}"
+            },
+            {
+              "fieldId": "created_at",
+              "fieldValue": "={{ new Date().toISOString() }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        300
+      ],
+      "id": "supabase-hvac-006",
+      "name": "Save Ticket"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse & Classify Emergency",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse & Classify Emergency": {
+      "main": [
+        [
+          {
+            "node": "Emergency Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Emergency Check": {
+      "main": [
+        [
+          {
+            "node": "Call Technician",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Save Ticket",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Call Technician": {
+      "main": [
+        [
+          {
+            "node": "Slack Emergency Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Ticket": {
+      "main": []
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "hvac-001",
+  "id": "hvac-wf",
+  "tags": [
+    "hvac",
+    "emergency",
+    "dispatch",
+    "twilio"
+  ]
+}

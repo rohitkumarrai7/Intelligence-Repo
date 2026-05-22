@@ -1,0 +1,166 @@
+{
+  "name": "Restaurant - WhatsApp Order Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "restaurant-order",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-rest-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst items = body.order_items || [];\nconst total = items.reduce((sum, item) => sum + (item.price * item.qty), 0);\nreturn [{\n  json: {\n    customer_name: body.customer_name || '',\n    customer_phone: body.customer_phone || '',\n    order_items: items,\n    order_total: total,\n    delivery_address: body.delivery_address || '',\n    payment_method: body.payment_method || 'cod',\n    special_instructions: body.special_instructions || '',\n    order_id: 'ORD-' + Date.now().toString(36).toUpperCase()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-order-002",
+      "name": "Parse Order Data"
+    },
+    {
+      "parameters": {
+        "tableId": "orders",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "order_id",
+              "fieldValue": "={{ $json.order_id }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "order_items",
+              "fieldValue": "={{ JSON.stringify($json.order_items) }}"
+            },
+            {
+              "fieldId": "order_total",
+              "fieldValue": "={{ $json.order_total }}"
+            },
+            {
+              "fieldId": "delivery_address",
+              "fieldValue": "={{ $json.delivery_address }}"
+            },
+            {
+              "fieldId": "payment_method",
+              "fieldValue": "={{ $json.payment_method }}"
+            },
+            {
+              "fieldId": "special_instructions",
+              "fieldValue": "={{ $json.special_instructions }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "received"
+            },
+            {
+              "fieldId": "source",
+              "fieldValue": "whatsapp"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "supabase-order-003",
+      "name": "Save Order"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v18.0/YOUR_PHONE_NUMBER_ID/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_WHATSAPP_API_TOKEN"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"messaging_product\": \"whatsapp\",\n  \"recipient_type\": \"individual\",\n  \"to\": $json.customer_phone,\n  \"type\": \"text\",\n  \"text\": {\n    \"body\": \"Hi \" + $json.customer_name + \", your order \" + $json.order_id + \" has been received! Total: $\" + $json.order_total + \". We'll prepare it shortly. \ud83c\udf55\"\n  }\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        400
+      ],
+      "id": "whatsapp-confirm-004",
+      "name": "WhatsApp Confirmation"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Order Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Order Data": {
+      "main": [
+        [
+          {
+            "node": "Save Order",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Order": {
+      "main": [
+        [
+          {
+            "node": "WhatsApp Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "restaurant-001",
+  "id": "restaurant-wf",
+  "tags": [
+    "restaurant",
+    "whatsapp",
+    "order-taking",
+    "food"
+  ]
+}

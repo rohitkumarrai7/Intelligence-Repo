@@ -1,0 +1,215 @@
+{
+  "name": "AI Meeting Summarizer - Notes to Action Items",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "meeting-summarize",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-meet-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{\n  json: {\n    meeting_title: body.meeting_title || '',\n    meeting_notes: body.meeting_notes || '',\n    attendees: body.attendees || [],\n    meeting_date: body.meeting_date || new Date().toISOString(),\n    project: body.project || '',\n    priority: body.priority || 'medium'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-meet-002",
+      "name": "Parse Meeting Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_GEMINI_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [{\n    parts: [{\n      text: \"Analyze these meeting notes and provide:\\n1. Executive Summary (3-4 sentences)\\n2. Key Decisions Made\\n3. Action Items with owners and deadlines\\n4. Follow-up questions\\n5. Sentiment analysis\\n\\nMeeting: \" + $json.meeting_title + \"\\nNotes: \" + $json.meeting_notes + \"\\nAttendees: \" + ($json.attendees || []).join(', ') + \"\\n\\nFormat as JSON with keys: summary, decisions, action_items (array with owner, task, deadline), follow_up_questions, sentiment\"\n    }]\n  }]\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "gemini-meet-003",
+      "name": "Gemini Summarize Meeting"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet summary = {};\ntry {\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (jsonMatch) {\n    summary = JSON.parse(jsonMatch[1]);\n  } else {\n    summary = JSON.parse(text);\n  }\n} catch (e) {\n  summary = {\n    summary: text.slice(0, 500),\n    decisions: [],\n    action_items: [],\n    follow_up_questions: [],\n    sentiment: 'neutral',\n    raw: text\n  };\n}\n\nconst prevData = $('Parse Meeting Data').first().json;\nreturn [{\n  json: {\n    meeting_title: prevData.meeting_title,\n    meeting_date: prevData.meeting_date,\n    project: prevData.project,\n    priority: prevData.priority,\n    summary: summary.summary || '',\n    decisions: summary.decisions || [],\n    action_items: summary.action_items || [],\n    follow_up_questions: summary.follow_up_questions || [],\n    sentiment: summary.sentiment || 'neutral',\n    raw_output: text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "parse-summary-004",
+      "name": "Parse Summary"
+    },
+    {
+      "parameters": {
+        "tableId": "meeting_summaries",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "meeting_title",
+              "fieldValue": "={{ $json.meeting_title }}"
+            },
+            {
+              "fieldId": "meeting_date",
+              "fieldValue": "={{ $json.meeting_date }}"
+            },
+            {
+              "fieldId": "project",
+              "fieldValue": "={{ $json.project }}"
+            },
+            {
+              "fieldId": "priority",
+              "fieldValue": "={{ $json.priority }}"
+            },
+            {
+              "fieldId": "summary",
+              "fieldValue": "={{ $json.summary }}"
+            },
+            {
+              "fieldId": "decisions",
+              "fieldValue": "={{ JSON.stringify($json.decisions) }}"
+            },
+            {
+              "fieldId": "action_items",
+              "fieldValue": "={{ JSON.stringify($json.action_items) }}"
+            },
+            {
+              "fieldId": "sentiment",
+              "fieldValue": "={{ $json.sentiment }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "summarized"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        200
+      ],
+      "id": "supabase-meet-005",
+      "name": "Save Meeting Summary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_RESEND_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"from\": \"meetings@yourcompany.com\",\n  \"to\": \"team@yourcompany.com\",\n  \"subject\": \"Meeting Summary: \" + $json.meeting_title,\n  \"html\": \"<h2>\" + $json.meeting_title + \"</h2><p><strong>Summary:</strong> \" + $json.summary + \"</p><p><strong>Sentiment:</strong> \" + $json.sentiment + \"</p><p><strong>Action Items:</strong></p><ul>\" + ($json.action_items || []).map(a => '<li>' + (a.task || a) + ' - Owner: ' + (a.owner || 'TBD') + '</li>').join('') + \"</ul>\"\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        400
+      ],
+      "id": "email-summary-006",
+      "name": "Email Summary to Team"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Meeting Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Meeting Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Summarize Meeting",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Summarize Meeting": {
+      "main": [
+        [
+          {
+            "node": "Parse Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Summary": {
+      "main": [
+        [
+          {
+            "node": "Save Meeting Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Meeting Summary": {
+      "main": [
+        [
+          {
+            "node": "Email Summary to Team",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "meeting-001",
+  "id": "meeting-wf",
+  "tags": [
+    "meeting",
+    "summarizer",
+    "action-items",
+    "gemini",
+    "trending"
+  ]
+}

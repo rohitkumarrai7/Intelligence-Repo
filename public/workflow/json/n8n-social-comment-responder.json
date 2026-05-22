@@ -1,0 +1,174 @@
+{
+  "name": "AI Social Media Comment Auto-Responder",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "social-respond",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-soc-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{\n  json: {\n    platform: body.platform || 'instagram',\n    post_content: body.post_content || '',\n    comment_text: body.comment_text || '',\n    commenter_name: body.commenter_name || '',\n    brand_voice: body.brand_voice || 'friendly_professional',\n    product_context: body.product_context || '',\n    comment_id: body.comment_id || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-soc-002",
+      "name": "Parse Comment Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_GEMINI_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [{\n    parts: [{\n      text: \"Generate a social media reply to this comment.\\n\\nPlatform: \" + $json.platform + \"\\nOur Post: \" + $json.post_content + \"\\nComment from \" + $json.commenter_name + \": \" + $json.comment_text + \"\\nBrand Voice: \" + $json.brand_voice + \"\\nProduct Context: \" + $json.product_context + \"\\n\\nRules:\\n1. Keep it under 2 sentences for Instagram/Twitter, 3 for LinkedIn\\n2. Match the brand voice\\n3. Be genuine, not robotic\\n4. Include a subtle CTA only if natural\\n5. Use appropriate emojis (1-2 max)\\n6. NEVER be defensive\\n\\nFormat JSON: {reply, tone_used, sentiment_detected, cta_included}\"\n    }]\n  }]\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "gemini-reply-003",
+      "name": "Gemini Generate Reply"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet reply = {};\ntry {\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (jsonMatch) {\n    reply = JSON.parse(jsonMatch[1]);\n  } else {\n    reply = JSON.parse(text);\n  }\n} catch (e) {\n  reply = {\n    reply: text.slice(0, 200),\n    tone_used: 'friendly',\n    sentiment_detected: 'neutral',\n    cta_included: false\n  };\n}\n\nconst prevData = $('Parse Comment Data').first().json;\nreturn [{\n  json: {\n    platform: prevData.platform,\n    comment_id: prevData.comment_id,\n    commenter_name: prevData.commenter_name,\n    comment_text: prevData.comment_text,\n    reply: reply.reply || '',\n    tone_used: reply.tone_used || 'friendly',\n    sentiment_detected: reply.sentiment_detected || 'neutral',\n    cta_included: reply.cta_included || false,\n    created_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "parse-reply-004",
+      "name": "Parse Reply"
+    },
+    {
+      "parameters": {
+        "tableId": "social_replies",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "platform",
+              "fieldValue": "={{ $json.platform }}"
+            },
+            {
+              "fieldId": "comment_id",
+              "fieldValue": "={{ $json.comment_id }}"
+            },
+            {
+              "fieldId": "commenter_name",
+              "fieldValue": "={{ $json.commenter_name }}"
+            },
+            {
+              "fieldId": "comment_text",
+              "fieldValue": "={{ $json.comment_text }}"
+            },
+            {
+              "fieldId": "reply",
+              "fieldValue": "={{ $json.reply }}"
+            },
+            {
+              "fieldId": "tone_used",
+              "fieldValue": "={{ $json.tone_used }}"
+            },
+            {
+              "fieldId": "sentiment_detected",
+              "fieldValue": "={{ $json.sentiment_detected }}"
+            },
+            {
+              "fieldId": "cta_included",
+              "fieldValue": "={{ $json.cta_included }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "generated"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        200
+      ],
+      "id": "supabase-soc-005",
+      "name": "Save Reply"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Comment Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Comment Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Generate Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Generate Reply": {
+      "main": [
+        [
+          {
+            "node": "Parse Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Reply": {
+      "main": [
+        [
+          {
+            "node": "Save Reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "social-001",
+  "id": "social-wf",
+  "tags": [
+    "social-media",
+    "comments",
+    "responder",
+    "gemini",
+    "trending"
+  ]
+}

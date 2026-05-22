@@ -1,0 +1,166 @@
+{
+  "name": "AI Cold Email Personalizer - LinkedIn to Email",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cold-email",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-ce-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{\n  json: {\n    prospect_name: body.prospect_name || '',\n    prospect_title: body.prospect_title || '',\n    prospect_company: body.prospect_company || '',\n    prospect_industry: body.prospect_industry || '',\n    prospect_linkedin: body.prospect_linkedin || '',\n    recent_post: body.recent_post || '',\n    your_product: body.your_product || '',\n    your_company: body.your_company || '',\n    tone: body.tone || 'professional'\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-ce-002",
+      "name": "Parse Prospect Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_GEMINI_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [{\n    parts: [{\n      text: \"Write a personalized cold email to \" + $json.prospect_name + \", who is \" + $json.prospect_title + \" at \" + $json.prospect_company + \" in the \" + $json.prospect_industry + \" industry.\\n\\nContext from their recent LinkedIn post: \" + $json.recent_post + \"\\n\\nOur product: \" + $json.your_product + \"\\nOur company: \" + $json.your_company + \"\\n\\nTone: \" + $json.tone + \"\\n\\nWrite a 3-paragraph email (max 150 words) that:\\n1. References their recent post genuinely\\n2. Connects their challenge to our solution\\n3. Has a soft CTA for a 15-min call\\n4. NO generic fluff, NO 'I hope this finds you well'\\n\\nFormat as JSON: {subject, body, personalization_hook, cta}\"\n    }]\n  }]\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "gemini-ce-003",
+      "name": "Gemini Write Email"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet email = {};\ntry {\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (jsonMatch) {\n    email = JSON.parse(jsonMatch[1]);\n  } else {\n    email = JSON.parse(text);\n  }\n} catch (e) {\n  email = {\n    subject: 'Quick question about ' + ($('Parse Prospect Data').first().json.prospect_company || 'your company'),\n    body: text,\n    personalization_hook: '',\n    cta: 'Would you be open to a quick chat?'\n  };\n}\n\nconst prevData = $('Parse Prospect Data').first().json;\nreturn [{\n  json: {\n    prospect_name: prevData.prospect_name,\n    prospect_email: prevData.prospect_email || '',\n    prospect_company: prevData.prospect_company,\n    subject: email.subject || '',\n    body: email.body || '',\n    personalization_hook: email.personalization_hook || '',\n    cta: email.cta || '',\n    word_count: (email.body || '').split(' ').length,\n    created_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "parse-email-004",
+      "name": "Parse Email Output"
+    },
+    {
+      "parameters": {
+        "tableId": "cold_emails",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "prospect_name",
+              "fieldValue": "={{ $json.prospect_name }}"
+            },
+            {
+              "fieldId": "prospect_company",
+              "fieldValue": "={{ $json.prospect_company }}"
+            },
+            {
+              "fieldId": "subject",
+              "fieldValue": "={{ $json.subject }}"
+            },
+            {
+              "fieldId": "body",
+              "fieldValue": "={{ $json.body }}"
+            },
+            {
+              "fieldId": "personalization_hook",
+              "fieldValue": "={{ $json.personalization_hook }}"
+            },
+            {
+              "fieldId": "word_count",
+              "fieldValue": "={{ $json.word_count }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "draft"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        200
+      ],
+      "id": "supabase-ce-005",
+      "name": "Save Email Draft"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Prospect Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Prospect Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Write Email",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Write Email": {
+      "main": [
+        [
+          {
+            "node": "Parse Email Output",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Email Output": {
+      "main": [
+        [
+          {
+            "node": "Save Email Draft",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "coldemail-001",
+  "id": "coldemail-wf",
+  "tags": [
+    "cold-email",
+    "outreach",
+    "sales",
+    "gemini",
+    "trending"
+  ]
+}

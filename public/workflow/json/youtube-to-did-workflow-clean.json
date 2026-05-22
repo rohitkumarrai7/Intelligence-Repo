@@ -1,0 +1,726 @@
+{
+  "name": "YouTube to D-ID Creator Shorts Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "youtube-to-heygen",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -3264,
+        256
+      ],
+      "id": "114dbc61-9049-466a-9e81-67b49dfcef76",
+      "name": "Webhook Trigger",
+      "webhookId": "f0e1d2c3-b4a5-6789-0abc-def012345678"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract Video ID & Thumbnail URL from YouTube URL\nconst youtubeUrl = $json.body.youtube_url || $json.youtube_url || '';\nconst creatorName = $json.body.creator_name || $json.creator_name || 'Creator';\n\n// Extract VIDEO_ID using regex (handles standard, short, and embed URLs)\nconst regex = /(?:youtu\\.be\\/|youtube\\.com\\/(?:watch\\?v=|embed\\/|v\\/|shorts\\/))([a-zA-Z0-9_-]{11})/;\nconst match = youtubeUrl.match(regex);\n\nif (!match || !match[1]) {\n  throw new Error(`Could not extract Video ID from URL: ${youtubeUrl}`);\n}\n\nconst videoId = match[1];\nconst thumbnailUrl = `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`;\n\nreturn [{\n  json: {\n    youtube_url: youtubeUrl,\n    creator_name: creatorName,\n    video_id: videoId,\n    thumbnail_url: thumbnailUrl\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -3024,
+        256
+      ],
+      "id": "8f7bf8ea-b32e-4a5c-9251-84af1bd43ea7",
+      "name": "Extract Video ID & Image"
+    },
+    {
+      "parameters": {
+        "url": "https://youtube-mp36.p.rapidapi.com/dl",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "id",
+              "value": "={{ $json.video_id }}"
+            }
+          ]
+        },
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "X-RapidAPI-Key",
+              "value": "YOUR_API_KEY_HERE"
+            },
+            {
+              "name": "X-RapidAPI-Host",
+              "value": "youtube-mp36.p.rapidapi.com"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 30000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2784,
+        256
+      ],
+      "id": "dc161822-db9f-4362-814e-229d46f80055",
+      "name": "YouTube Audio Extraction"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Extract the audio download link from the RapidAPI response\nconst link = $json.link || $json.url || $json.download_url || '';\nconst status = $json.status;\nconst prevData = $('Extract Video ID & Image').first().json;\n\nif (!link && status === 'processing') {\n  return [{\n    json: {\n      youtube_url: prevData.youtube_url,\n      creator_name: prevData.creator_name,\n      video_id: prevData.video_id,\n      thumbnail_url: prevData.thumbnail_url,\n      audio_download_url: null,\n      audio_status: status\n    }\n  }];\n}\n\nif (!link) {\n  throw new Error('YouTube MP3 API did not return a download link. Response: ' + JSON.stringify($json));\n}\n\nreturn [{\n  json: {\n    youtube_url: prevData.youtube_url,\n    creator_name: prevData.creator_name,\n    video_id: prevData.video_id,\n    thumbnail_url: prevData.thumbnail_url,\n    audio_download_url: link,\n    audio_status: status\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -2544,
+        256
+      ],
+      "id": "1018be6a-7a9b-4027-860b-d0b0c7917e2f",
+      "name": "Parse Audio URL"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=AIzaSyD5YpKha29ePOPOcUx5TVl7xvO1uPNvA54",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [\n    {\n      parts: [\n        {\n          text: \"Write a 60-second engaging short-form video script for the creator '\" + $json.creator_name + \"'. The script should be exactly 130 words. Do not include stage directions, just the spoken text. Make it energetic, hook-driven, and suitable for YouTube Shorts or TikTok.\"\n        }\n      ]\n    }\n  ]\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -2160,
+        256
+      ],
+      "id": "558607d8-e115-42c3-b72f-8692736d048e",
+      "name": "Gemini Script Generation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse the Gemini response to extract the script text\nconst candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\nconst script = text.trim().slice(0, 1400);\n\nif (!script) {\n  throw new Error('Empty script returned from Gemini API');\n}\n\n// Carry forward data from earlier nodes\nconst prevData = $('Parse Audio URL').first().json;\n\nreturn [{\n  json: {\n    youtube_url: prevData.youtube_url,\n    creator_name: prevData.creator_name,\n    video_id: prevData.video_id,\n    thumbnail_url: prevData.thumbnail_url,\n    audio_download_url: prevData.audio_download_url,\n    script_text: script\n  }\n}];\n"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1840,
+        256
+      ],
+      "id": "4d04ac72-5313-45b6-b802-16c8f99daf46",
+      "name": "Parse Gemini Script"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.d-id.com/talks",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "YOUR_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"source_url\": $json.thumbnail_url,\n  \"script\": {\n    \"type\": \"text\",\n    \"input\": $json.script_text\n  }\n}) }}",
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          },
+          "timeout": 60000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1360,
+        256
+      ],
+      "id": "did-create-talk-001",
+      "name": "D-ID Create Talk"
+    },
+    {
+      "parameters": {
+        "jsCode": "const talkId = $json.id || '';\nif (!talkId) {\n  throw new Error('D-ID did not return talk ID. Response: ' + JSON.stringify($json));\n}\nconst prevData = $('Parse Gemini Script').first().json;\nreturn [{\n  json: {\n    did_talk_id: talkId,\n    attempts: 0,\n    max_poll_seconds: 300,\n    poll_interval_seconds: 5,\n    youtube_url: prevData.youtube_url,\n    creator_name: prevData.creator_name,\n    video_id: prevData.video_id,\n    thumbnail_url: prevData.thumbnail_url,\n    script_text: prevData.script_text\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        256
+      ],
+      "id": "did-init-poll-002",
+      "name": "Init D-ID Polling"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.d-id.com/talks/{{ $json.did_talk_id }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "YOUR_API_KEY_HERE"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "json"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -840,
+        256
+      ],
+      "id": "did-poll-003",
+      "name": "Poll D-ID Status"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Merge the poll response with the carried-forward pipeline data\nconst pollData = $json;\nconst baseData = $('Init D-ID Polling').first().json;\nreturn [{\n  json: {\n    ...baseData,\n    ...pollData\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -560,
+        256
+      ],
+      "id": "did-merge-004",
+      "name": "Merge D-ID Poll Data"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cond-done",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "done",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "cond-error",
+                    "leftValue": "={{ $json.status }}",
+                    "rightValue": "error",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -280,
+        256
+      ],
+      "id": "did-switch-005",
+      "name": "Check D-ID Status"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "set-video-url",
+              "name": "heygen_final_video_url",
+              "value": "={{ $json.result_url }}",
+              "type": "string"
+            },
+            {
+              "id": "set-status",
+              "name": "status",
+              "value": "completed",
+              "type": "string"
+            },
+            {
+              "id": "set-creator",
+              "name": "creator_name",
+              "value": "={{ $json.creator_name }}",
+              "type": "string"
+            },
+            {
+              "id": "set-script",
+              "name": "script_text",
+              "value": "={{ $json.script_text }}",
+              "type": "string"
+            },
+            {
+              "id": "set-youtube-url",
+              "name": "youtube_url",
+              "value": "={{ $json.youtube_url }}",
+              "type": "string"
+            },
+            {
+              "id": "set-thumbnail",
+              "name": "thumbnail_url",
+              "value": "={{ $json.thumbnail_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        80
+      ],
+      "id": "did-set-final-006",
+      "name": "Set Final Video Fields"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "err-video-url",
+              "name": "heygen_final_video_url",
+              "value": "",
+              "type": "string"
+            },
+            {
+              "id": "err-status",
+              "name": "status",
+              "value": "failed",
+              "type": "string"
+            },
+            {
+              "id": "err-detail",
+              "name": "did_error",
+              "value": "={{ $json.error || $json.message || 'D-ID generation failed' }}",
+              "type": "string"
+            },
+            {
+              "id": "err-creator",
+              "name": "creator_name",
+              "value": "={{ $json.creator_name }}",
+              "type": "string"
+            },
+            {
+              "id": "err-script",
+              "name": "script_text",
+              "value": "={{ $json.script_text }}",
+              "type": "string"
+            },
+            {
+              "id": "err-youtube-url",
+              "name": "youtube_url",
+              "value": "={{ $json.youtube_url }}",
+              "type": "string"
+            },
+            {
+              "id": "err-thumbnail",
+              "name": "thumbnail_url",
+              "value": "={{ $json.thumbnail_url }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        0,
+        280
+      ],
+      "id": "did-set-error-007",
+      "name": "Set D-ID Error Fields"
+    },
+    {
+      "parameters": {
+        "jsCode": "const prev = $json.attempts || 0;\nconst interval = $json.poll_interval_seconds || 5;\nconst elapsed = prev * interval;\n\nif (elapsed >= ($json.max_poll_seconds || 300)) {\n  throw new Error('D-ID polling budget exceeded \u2014 video generation took too long.');\n}\n\nreturn [{\n  json: {\n    ...$json,\n    attempts: prev + 1\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        480
+      ],
+      "id": "did-increment-008",
+      "name": "Increment D-ID Attempt"
+    },
+    {
+      "parameters": {
+        "amount": 5
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [
+        240,
+        480
+      ],
+      "id": "did-wait-009",
+      "name": "Wait 5s",
+      "webhookId": "wait-did-poll-loop"
+    },
+    {
+      "parameters": {
+        "tableId": "generated_videos",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "creator_name",
+              "fieldValue": "={{ $json.creator_name }}"
+            },
+            {
+              "fieldId": "video_url",
+              "fieldValue": "={{ $json.heygen_final_video_url }}"
+            },
+            {
+              "fieldId": "script",
+              "fieldValue": "={{ $json.script_text }}"
+            },
+            {
+              "fieldId": "youtube_url",
+              "fieldValue": "={{ $json.youtube_url }}"
+            },
+            {
+              "fieldId": "thumbnail_url",
+              "fieldValue": "={{ $json.thumbnail_url }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.status }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        304,
+        0
+      ],
+      "id": "41c023cd-b0df-4813-b605-d591779a68bb",
+      "name": "Supabase Insert Row",
+      "credentials": {
+        "supabaseApi": {
+          "id": "wxk8B3UdNVF07yy0",
+          "name": "Supabase account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Phase 1: Input & Extraction\n",
+        "height": 96,
+        "width": 208
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -3296,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "5786fac3-7a87-4da9-9b67-abb632de2b1f",
+      "name": "Sticky Note - Phase 1"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 2: Dynamic Script Generation\nGemini generates a 60s script dynamically from the creator's name"
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -2240,
+        80
+      ],
+      "typeVersion": 1,
+      "id": "e0df4dfe-3b01-4fe5-af21-bad1650535d2",
+      "name": "Sticky Note - Phase 2"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 3 & 4: D-ID Video + Polling\nReplaced HeyGen with D-ID (cheaper API-first alternative).\nUses YouTube thumbnail as the avatar image.\nIncludes timeout guardrail after 300s.",
+        "height": 96,
+        "width": 276
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        -1392,
+        112
+      ],
+      "typeVersion": 1,
+      "id": "c5127b44-2c79-4d17-81e7-0d93bf48b1cd",
+      "name": "Sticky Note - Phase 3-4"
+    },
+    {
+      "parameters": {
+        "content": "## Phase 5: Supabase Database Insert\nBoth real video URL and mock bypass URL\nroute here to insert a row into `generated_videos`.\n\n",
+        "height": 152,
+        "width": 332
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "position": [
+        208,
+        -208
+      ],
+      "typeVersion": 1,
+      "id": "2d561e5d-c021-477f-81cc-31d944fec7d3",
+      "name": "Sticky Note - Phase 5"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Extract Video ID & Image",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Video ID & Image": {
+      "main": [
+        [
+          {
+            "node": "YouTube Audio Extraction",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "YouTube Audio Extraction": {
+      "main": [
+        [
+          {
+            "node": "Parse Audio URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Audio URL": {
+      "main": [
+        [
+          {
+            "node": "Gemini Script Generation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Script Generation": {
+      "main": [
+        [
+          {
+            "node": "Parse Gemini Script",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Gemini Script": {
+      "main": [
+        [
+          {
+            "node": "D-ID Create Talk",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "D-ID Create Talk": {
+      "main": [
+        [
+          {
+            "node": "Init D-ID Polling",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init D-ID Polling": {
+      "main": [
+        [
+          {
+            "node": "Poll D-ID Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Poll D-ID Status": {
+      "main": [
+        [
+          {
+            "node": "Merge D-ID Poll Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge D-ID Poll Data": {
+      "main": [
+        [
+          {
+            "node": "Check D-ID Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check D-ID Status": {
+      "main": [
+        [
+          {
+            "node": "Set Final Video Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Set D-ID Error Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Increment D-ID Attempt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Final Video Fields": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set D-ID Error Fields": {
+      "main": [
+        [
+          {
+            "node": "Supabase Insert Row",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Increment D-ID Attempt": {
+      "main": [
+        [
+          {
+            "node": "Wait 5s",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 5s": {
+      "main": [
+        [
+          {
+            "node": "Poll D-ID Status",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": false
+  },
+  "versionId": "2888af6d-d217-40bf-bab8-d7da57ae44fd",
+  "meta": {
+    "instanceId": "b0f9e28e0ed4db6b144e6c57cd0bda7e44a179074eb9c2e39041327598885234"
+  },
+  "id": "6xCVndMUHrkCEnKK",
+  "tags": []
+}

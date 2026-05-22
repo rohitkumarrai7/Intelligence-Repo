@@ -1,0 +1,214 @@
+{
+  "name": "Dental Clinic - Appointment Booking Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dental-booking",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-dental-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{\n  json: {\n    patient_name: body.patient_name || '',\n    patient_phone: body.patient_phone || '',\n    preferred_date: body.preferred_date || '',\n    preferred_time: body.preferred_time || '',\n    service_type: body.service_type || 'general_checkup',\n    is_new_patient: body.is_new_patient || false,\n    insurance: body.insurance || 'none',\n    notes: body.notes || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-dental-002",
+      "name": "Parse Booking Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cal.com/v1/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_CAL_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"eventTypeId\": YOUR_EVENT_TYPE_ID,\n  \"start\": $json.preferred_date + \"T\" + $json.preferred_time,\n  \"responses\": {\n    \"name\": $json.patient_name,\n    \"email\": $json.patient_phone + \"@placeholder.com\",\n    \"notes\": $json.notes\n  },\n  \"metadata\": {\n    \"service\": $json.service_type,\n    \"insurance\": $json.insurance,\n    \"new_patient\": $json.is_new_patient\n  }\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "cal-booking-003",
+      "name": "Create Cal.com Booking"
+    },
+    {
+      "parameters": {
+        "tableId": "appointments",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "patient_name",
+              "fieldValue": "={{ $json.patient_name }}"
+            },
+            {
+              "fieldId": "patient_phone",
+              "fieldValue": "={{ $json.patient_phone }}"
+            },
+            {
+              "fieldId": "preferred_date",
+              "fieldValue": "={{ $json.preferred_date }}"
+            },
+            {
+              "fieldId": "preferred_time",
+              "fieldValue": "={{ $json.preferred_time }}"
+            },
+            {
+              "fieldId": "service_type",
+              "fieldValue": "={{ $json.service_type }}"
+            },
+            {
+              "fieldId": "is_new_patient",
+              "fieldValue": "={{ $json.is_new_patient }}"
+            },
+            {
+              "fieldId": "insurance",
+              "fieldValue": "={{ $json.insurance }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "confirmed"
+            },
+            {
+              "fieldId": "booking_source",
+              "fieldValue": "voice_agent"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "supabase-appt-004",
+      "name": "Save Appointment"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.twilio.com/2010-04-01/Accounts/YOUR_TWILIO_SID/Messages.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Basic YOUR_TWILIO_AUTH"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "To",
+              "value": "={{ $json.patient_phone }}"
+            },
+            {
+              "name": "From",
+              "value": "YOUR_TWILIO_NUMBER"
+            },
+            {
+              "name": "Body",
+              "value": "={{ 'Hi ' + $json.patient_name + ', your dental appointment is confirmed for ' + $json.preferred_date + ' at ' + $json.preferred_time + '. See you then! - Dr. Smith Dental' }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        400
+      ],
+      "id": "sms-confirm-005",
+      "name": "SMS Confirmation"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Booking Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Booking Data": {
+      "main": [
+        [
+          {
+            "node": "Create Cal.com Booking",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create Cal.com Booking": {
+      "main": [
+        [
+          {
+            "node": "Save Appointment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Appointment": {
+      "main": [
+        [
+          {
+            "node": "SMS Confirmation",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "dental-booking-001",
+  "id": "dental-booking-wf",
+  "tags": [
+    "dental",
+    "appointment",
+    "cal.com",
+    "sms"
+  ]
+}

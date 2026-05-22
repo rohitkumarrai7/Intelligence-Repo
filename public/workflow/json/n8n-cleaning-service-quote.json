@@ -1,0 +1,170 @@
+{
+  "name": "Cleaning Service - Quote Calculator Bot",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "cleaning-quote",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-clean-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nconst sqft = parseInt(body.square_feet) || 1000;\nconst bedrooms = parseInt(body.bedrooms) || 2;\nconst bathrooms = parseInt(body.bathrooms) || 1;\nconst service = body.service_type || 'standard';\nconst extras = body.extras || [];\n\n// Pricing logic\nlet basePrice = sqft * 0.15;\nbasePrice += bedrooms * 25;\nbasePrice += bathrooms * 35;\n\nif (service === 'deep_clean') basePrice *= 1.5;\nif (service === 'move_in_out') basePrice *= 2.0;\n\nlet extraCost = 0;\nif (extras.includes('windows')) extraCost += 75;\nif (extras.includes('carpet')) extraCost += 120;\nif (extras.includes('fridge')) extraCost += 45;\nif (extras.includes('oven')) extraCost += 45;\n\nconst total = Math.round(basePrice + extraCost);\nconst duration = Math.ceil((sqft / 500) + (bedrooms * 0.5) + (bathrooms * 0.5)) + ' hours';\n\nreturn [{\n  json: {\n    customer_name: body.customer_name || '',\n    customer_phone: body.customer_phone || '',\n    customer_email: body.customer_email || '',\n    address: body.address || '',\n    square_feet: sqft,\n    bedrooms: bedrooms,\n    bathrooms: bathrooms,\n    service_type: service,\n    extras: extras,\n    base_price: Math.round(basePrice),\n    extra_cost: extraCost,\n    total_price: total,\n    estimated_duration: duration,\n    quote_id: 'QTE-' + Date.now().toString(36).toUpperCase()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "calc-quote-002",
+      "name": "Calculate Quote"
+    },
+    {
+      "parameters": {
+        "tableId": "cleaning_quotes",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "quote_id",
+              "fieldValue": "={{ $json.quote_id }}"
+            },
+            {
+              "fieldId": "customer_name",
+              "fieldValue": "={{ $json.customer_name }}"
+            },
+            {
+              "fieldId": "customer_phone",
+              "fieldValue": "={{ $json.customer_phone }}"
+            },
+            {
+              "fieldId": "customer_email",
+              "fieldValue": "={{ $json.customer_email }}"
+            },
+            {
+              "fieldId": "address",
+              "fieldValue": "={{ $json.address }}"
+            },
+            {
+              "fieldId": "square_feet",
+              "fieldValue": "={{ $json.square_feet }}"
+            },
+            {
+              "fieldId": "service_type",
+              "fieldValue": "={{ $json.service_type }}"
+            },
+            {
+              "fieldId": "extras",
+              "fieldValue": "={{ JSON.stringify($json.extras) }}"
+            },
+            {
+              "fieldId": "total_price",
+              "fieldValue": "={{ $json.total_price }}"
+            },
+            {
+              "fieldId": "estimated_duration",
+              "fieldValue": "={{ $json.estimated_duration }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "quoted"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "supabase-clean-003",
+      "name": "Save Quote"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_RESEND_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"from\": \"quotes@yourcleaningco.com\",\n  \"to\": $json.customer_email,\n  \"subject\": \"Your Cleaning Quote - \" + $json.quote_id,\n  \"html\": \"<h2>Hi \" + $json.customer_name + \",</h2><p>Your cleaning quote is ready!</p><p><strong>Quote ID:</strong> \" + $json.quote_id + \"</p><p><strong>Service:</strong> \" + $json.service_type + \"</p><p><strong>Total:</strong> $\" + $json.total_price + \"</p><p><strong>Duration:</strong> \" + $json.estimated_duration + \"</p><p>Reply to book!</p>\"\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        400
+      ],
+      "id": "email-quote-004",
+      "name": "Email Quote"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Calculate Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculate Quote": {
+      "main": [
+        [
+          {
+            "node": "Save Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Quote": {
+      "main": [
+        [
+          {
+            "node": "Email Quote",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "cleaning-001",
+  "id": "cleaning-wf",
+  "tags": [
+    "cleaning",
+    "quote",
+    "calculator",
+    "email"
+  ]
+}

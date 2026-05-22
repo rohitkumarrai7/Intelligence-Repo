@@ -1,0 +1,224 @@
+{
+  "name": "AI Resume Screening & Candidate Ranking",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "resume-screen",
+        "responseMode": "lastNode"
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "webhook-res-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\nreturn [{\n  json: {\n    candidate_name: body.candidate_name || '',\n    candidate_email: body.candidate_email || '',\n    job_title: body.job_title || '',\n    resume_text: body.resume_text || '',\n    job_description: body.job_description || '',\n    required_skills: body.required_skills || [],\n    min_experience: body.min_experience || 0\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "parse-res-002",
+      "name": "Parse Resume Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_GEMINI_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [{\n    parts: [{\n      text: \"Screen this candidate for the role.\\n\\nJob: \" + $json.job_title + \"\\nJob Description: \" + $json.job_description + \"\\nRequired Skills: \" + ($json.required_skills || []).join(', ') + \"\\nMin Experience: \" + $json.min_experience + \" years\\n\\nResume: \" + $json.resume_text + \"\\n\\nProvide JSON with:\\n1. match_score (0-100)\\n2. skills_match (array of matched skills)\\n3. skills_missing (array of missing skills)\\n4. experience_years (estimated)\\n5. experience_match (boolean)\\n6. overall_verdict (strong_match, good_match, partial_match, no_match)\\n7. strengths (array)\\n8. concerns (array)\\n9. recommended_interview (boolean)\\n10. interview_questions (array of 3 tailored questions)\"\n    }]\n  }]\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "gemini-screen-003",
+      "name": "Gemini Screen Resume"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet screening = {};\ntry {\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (jsonMatch) {\n    screening = JSON.parse(jsonMatch[1]);\n  } else {\n    screening = JSON.parse(text);\n  }\n} catch (e) {\n  screening = {\n    match_score: 50,\n    skills_match: [],\n    skills_missing: [],\n    experience_years: 0,\n    experience_match: false,\n    overall_verdict: 'partial_match',\n    strengths: [],\n    concerns: [],\n    recommended_interview: false,\n    interview_questions: []\n  };\n}\n\nconst prevData = $('Parse Resume Data').first().json;\nreturn [{\n  json: {\n    candidate_name: prevData.candidate_name,\n    candidate_email: prevData.candidate_email,\n    job_title: prevData.job_title,\n    match_score: screening.match_score || 0,\n    skills_match: screening.skills_match || [],\n    skills_missing: screening.skills_missing || [],\n    experience_years: screening.experience_years || 0,\n    experience_match: screening.experience_match || false,\n    overall_verdict: screening.overall_verdict || 'partial_match',\n    strengths: screening.strengths || [],\n    concerns: screening.concerns || [],\n    recommended_interview: screening.recommended_interview || false,\n    interview_questions: screening.interview_questions || [],\n    screened_at: new Date().toISOString()\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "parse-screen-004",
+      "name": "Parse Screening Result"
+    },
+    {
+      "parameters": {
+        "tableId": "candidate_screening",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "candidate_name",
+              "fieldValue": "={{ $json.candidate_name }}"
+            },
+            {
+              "fieldId": "candidate_email",
+              "fieldValue": "={{ $json.candidate_email }}"
+            },
+            {
+              "fieldId": "job_title",
+              "fieldValue": "={{ $json.job_title }}"
+            },
+            {
+              "fieldId": "match_score",
+              "fieldValue": "={{ $json.match_score }}"
+            },
+            {
+              "fieldId": "overall_verdict",
+              "fieldValue": "={{ $json.overall_verdict }}"
+            },
+            {
+              "fieldId": "experience_years",
+              "fieldValue": "={{ $json.experience_years }}"
+            },
+            {
+              "fieldId": "skills_match",
+              "fieldValue": "={{ JSON.stringify($json.skills_match) }}"
+            },
+            {
+              "fieldId": "skills_missing",
+              "fieldValue": "={{ JSON.stringify($json.skills_missing) }}"
+            },
+            {
+              "fieldId": "recommended_interview",
+              "fieldValue": "={{ $json.recommended_interview }}"
+            },
+            {
+              "fieldId": "interview_questions",
+              "fieldValue": "={{ JSON.stringify($json.interview_questions) }}"
+            },
+            {
+              "fieldId": "status",
+              "fieldValue": "={{ $json.recommended_interview ? 'interview_scheduled' : 'rejected' }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        200
+      ],
+      "id": "supabase-res-005",
+      "name": "Save Screening Result"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.resend.com/emails",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "Bearer YOUR_RESEND_API_KEY"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"from\": \"hiring@yourcompany.com\",\n  \"to\": $json.candidate_email,\n  \"subject\": \"Update on your application for \" + $json.job_title,\n  \"html\": \"<h2>Hi \" + $json.candidate_name + \",</h2><p>Thank you for applying for the \" + $json.job_title + \" position.</p><p>\" + ($json.recommended_interview ? \"We are impressed with your profile and would like to invite you for an interview!\" : \"After careful review, we have decided to move forward with other candidates.\") + \"</p><p>Match Score: \" + $json.match_score + \"/100</p>\"\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -200,
+        400
+      ],
+      "id": "email-candidate-006",
+      "name": "Email Candidate"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [
+        [
+          {
+            "node": "Parse Resume Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Resume Data": {
+      "main": [
+        [
+          {
+            "node": "Gemini Screen Resume",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Screen Resume": {
+      "main": [
+        [
+          {
+            "node": "Parse Screening Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Screening Result": {
+      "main": [
+        [
+          {
+            "node": "Save Screening Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Screening Result": {
+      "main": [
+        [
+          {
+            "node": "Email Candidate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "resume-001",
+  "id": "resume-wf",
+  "tags": [
+    "resume",
+    "screening",
+    "hiring",
+    "hr",
+    "gemini",
+    "trending"
+  ]
+}

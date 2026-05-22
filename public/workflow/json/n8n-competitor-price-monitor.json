@@ -1,0 +1,245 @@
+{
+  "name": "AI Competitor Price Monitor & Alert",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 6
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1000,
+        200
+      ],
+      "id": "schedule-price-001",
+      "name": "Schedule Trigger (Every 6h)"
+    },
+    {
+      "parameters": {
+        "method": "GET",
+        "url": "=https://api.scraperapi.com/?api_key=YOUR_SCRAPERAPI_KEY&url={{ $json.product_url }}",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "User-Agent",
+              "value": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "string"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -800,
+        200
+      ],
+      "id": "scrape-price-002",
+      "name": "Scrape Product Page"
+    },
+    {
+      "parameters": {
+        "jsCode": "const html = $json;\n// Extract price using regex - adjust based on site structure\nconst priceMatch = html.match(/\\$([0-9,]+\\.?[0-9]*)/);\nconst titleMatch = html.match(/<title>(.*?)<\\/title>/);\nconst currentPrice = priceMatch ? parseFloat(priceMatch[1].replace(',', '')) : 0;\nconst productTitle = titleMatch ? titleMatch[1] : 'Unknown Product';\n\nreturn [{\n  json: {\n    product_title: productTitle,\n    current_price: currentPrice,\n    scraped_at: new Date().toISOString(),\n    raw_html_length: html.length\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -600,
+        200
+      ],
+      "id": "parse-price-003",
+      "name": "Extract Price"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=YOUR_GEMINI_API_KEY",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  contents: [{\n    parts: [{\n      text: \"Analyze this competitor pricing data and provide insights:\\n\\nProduct: \" + $json.product_title + \"\\nCurrent Price: $\" + $json.current_price + \"\\n\\nProvide JSON with:\\n1. price_trend (increasing, decreasing, stable)\\n2. price_position (premium, competitive, budget)\\n3. recommended_action (match_price, undercut, maintain, investigate)\\n4. alert_level (critical, warning, info)\\n5. reasoning (brief explanation)\"\n    }]\n  }]\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -400,
+        200
+      ],
+      "id": "gemini-analyze-004",
+      "name": "Gemini Analyze Price"
+    },
+    {
+      "parameters": {
+        "jsCode": "const candidates = $json.candidates || [];\nconst text = candidates?.[0]?.content?.parts?.[0]?.text || '';\n\nlet analysis = {};\ntry {\n  const jsonMatch = text.match(/```json\\n?([\\s\\S]*?)\\n?```/);\n  if (jsonMatch) {\n    analysis = JSON.parse(jsonMatch[1]);\n  } else {\n    analysis = JSON.parse(text);\n  }\n} catch (e) {\n  analysis = {\n    price_trend: 'stable',\n    price_position: 'competitive',\n    recommended_action: 'maintain',\n    alert_level: 'info',\n    reasoning: 'Unable to analyze'\n  };\n}\n\nconst prevData = $('Extract Price').first().json;\nreturn [{\n  json: {\n    product_title: prevData.product_title,\n    current_price: prevData.current_price,\n    scraped_at: prevData.scraped_at,\n    price_trend: analysis.price_trend || 'stable',\n    price_position: analysis.price_position || 'competitive',\n    recommended_action: analysis.recommended_action || 'maintain',\n    alert_level: analysis.alert_level || 'info',\n    reasoning: analysis.reasoning || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        200
+      ],
+      "id": "parse-analysis-005",
+      "name": "Parse Analysis"
+    },
+    {
+      "parameters": {
+        "tableId": "price_monitoring",
+        "fieldsUi": {
+          "fieldValues": [
+            {
+              "fieldId": "product_title",
+              "fieldValue": "={{ $json.product_title }}"
+            },
+            {
+              "fieldId": "current_price",
+              "fieldValue": "={{ $json.current_price }}"
+            },
+            {
+              "fieldId": "scraped_at",
+              "fieldValue": "={{ $json.scraped_at }}"
+            },
+            {
+              "fieldId": "price_trend",
+              "fieldValue": "={{ $json.price_trend }}"
+            },
+            {
+              "fieldId": "price_position",
+              "fieldValue": "={{ $json.price_position }}"
+            },
+            {
+              "fieldId": "recommended_action",
+              "fieldValue": "={{ $json.recommended_action }}"
+            },
+            {
+              "fieldId": "alert_level",
+              "fieldValue": "={{ $json.alert_level }}"
+            },
+            {
+              "fieldId": "reasoning",
+              "fieldValue": "={{ $json.reasoning }}"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [
+        0,
+        200
+      ],
+      "id": "supabase-price-006",
+      "name": "Save Price Data"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hooks.slack.com/services/YOUR_SLACK_WEBHOOK",
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"text\": \"\ud83d\udcca Price Monitor Alert\\nProduct: \" + $json.product_title + \"\\nPrice: $\" + $json.current_price + \"\\nTrend: \" + $json.price_trend + \"\\nAlert: \" + $json.alert_level + \"\\nAction: \" + $json.recommended_action + \"\\nReason: \" + $json.reasoning\n}) }}"
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        400
+      ],
+      "id": "slack-price-007",
+      "name": "Slack Price Alert"
+    }
+  ],
+  "connections": {
+    "Schedule Trigger (Every 6h)": {
+      "main": [
+        [
+          {
+            "node": "Scrape Product Page",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Scrape Product Page": {
+      "main": [
+        [
+          {
+            "node": "Extract Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract Price": {
+      "main": [
+        [
+          {
+            "node": "Gemini Analyze Price",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Gemini Analyze Price": {
+      "main": [
+        [
+          {
+            "node": "Parse Analysis",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Analysis": {
+      "main": [
+        [
+          {
+            "node": "Save Price Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Save Price Data": {
+      "main": [
+        [
+          {
+            "node": "Slack Price Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "price-001",
+  "id": "price-wf",
+  "tags": [
+    "price-monitor",
+    "competitor",
+    "scraping",
+    "gemini",
+    "trending"
+  ]
+}
