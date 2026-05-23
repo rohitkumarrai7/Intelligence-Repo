@@ -2,19 +2,6 @@
 
 import Script from "next/script";
 
-type FBQ = (
-  action: "track" | "init" | "consent",
-  eventOrPixelId: string,
-  params?: Record<string, unknown>,
-  options?: { eventID?: string }
-) => void;
-
-declare global {
-  interface Window {
-    fbq?: FBQ;
-  }
-}
-
 export function MetaPixel() {
   const pixelId = process.env.NEXT_PUBLIC_META_PIXEL_ID;
 
