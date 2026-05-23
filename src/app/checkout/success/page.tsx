@@ -4,8 +4,9 @@ import { motion } from "framer-motion";
 import Link from "next/link";
 import { Check, Download, ArrowRight, Package, FileJson, Zap } from "lucide-react";
 import { useSearchParams } from "next/navigation";
-import { Suspense } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Navbar, Footer } from "@/components/ui/Navbar";
+import { generateClientEventId, trackPurchase } from "@/lib/meta-client";
 
 const PRODUCT_DETAILS: Record<string, { name: string; files: string[]; price: number }> = {
   // Individual Workflows & Voice Agents
@@ -33,10 +34,26 @@ const PRODUCT_DETAILS: Record<string, { name: string; files: string[]; price: nu
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
+  const trackedRef = useRef(false);
   const demo = searchParams.get("demo") === "true";
   const productSlug = searchParams.get("product") || "complete-bundle";
+  const checkoutId = searchParams.get("checkout_id");
 
   const product = PRODUCT_DETAILS[productSlug] || PRODUCT_DETAILS["default"];
+
+  useEffect(() => {
+    if (trackedRef.current || demo) return;
+
+    const purchaseEventId = checkoutId || generateClientEventId();
+    trackPurchase({
+      eventId: purchaseEventId,
+      value: product.price,
+      currency: "USD",
+      contentName: product.name,
+      contentIds: [productSlug],
+    });
+    trackedRef.current = true;
+  }, [checkoutId, demo, product.name, product.price, productSlug]);
 
   return (
     <motion.div

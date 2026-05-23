@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { sendMetaConversionEvent } from "@/lib/meta";
 
 // Product ID mapping from Polar
 const PRODUCT_PRICES: Record<string, { priceId: string; name: string; price: number }> = {
@@ -159,7 +160,7 @@ const PRODUCT_PRICES: Record<string, { priceId: string; name: string; price: num
 
 export async function POST(req: NextRequest) {
   try {
-    const { productSlug, priceId } = await req.json();
+    const { productSlug, priceId, eventId, fbp, fbc, email, externalId } = await req.json();
 
     const product = PRODUCT_PRICES[productSlug];
     
@@ -171,6 +172,37 @@ export async function POST(req: NextRequest) {
     }
 
     const selectedPriceId = priceId || product?.priceId;
+    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const eventSourceUrl = `${origin}/pricing`;
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      undefined;
+    const userAgent = req.headers.get("user-agent") || undefined;
+
+    if (eventId && product) {
+      void sendMetaConversionEvent({
+        eventName: "InitiateCheckout",
+        eventId,
+        eventSourceUrl,
+        userData: {
+          em: typeof email === "string" ? email : undefined,
+          external_id: typeof externalId === "string" ? externalId : "anonymous",
+          client_ip_address: clientIp,
+          client_user_agent: userAgent,
+          fbp: typeof fbp === "string" ? fbp : undefined,
+          fbc: typeof fbc === "string" ? fbc : undefined,
+        },
+        customData: {
+          value: product.price / 100,
+          currency: "USD",
+          content_name: product.name,
+          content_ids: [productSlug],
+          content_type: "product",
+        },
+        testEventCode: process.env.META_CAPI_TEST_EVENT_CODE,
+      });
+    }
 
     if (!selectedPriceId) {
       return NextResponse.json(
@@ -194,7 +226,6 @@ export async function POST(req: NextRequest) {
     }
 
     // Create actual Polar checkout
-    const origin = req.headers.get("origin") || "http://localhost:3000";
     const successUrl = `${origin}/checkout/success?checkout_id={CHECKOUT_ID}&product=${productSlug}`;
     const cancelUrl = `${origin}/pricing`;
 

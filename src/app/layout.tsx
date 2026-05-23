@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { ClerkProvider } from "@clerk/nextjs";
 import "./globals.css";
+import { MetaPixel } from "@/components/MetaPixel";
 
 export const metadata: Metadata = {
   title: "Intelligence Repository — Premium Codebases & AI Workflows",
@@ -47,6 +48,7 @@ export default function RootLayout({
     >
       <html lang="en" className="dark">
         <body className="min-h-screen bg-background text-text-primary antialiased">
+          <MetaPixel />
           {children}
         </body>
       </html>

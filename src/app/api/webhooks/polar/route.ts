@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from "resend";
+import { sendMetaConversionEvent } from "@/lib/meta";
 
 const resend = new Resend(process.env.RESEND_API_KEY || "re_xxx");
 
@@ -185,6 +186,33 @@ Time: ${new Date().toISOString()}
       to: ADMIN_EMAIL,
       subject: `[ORDER] ${product.name} - $${(amount / 100).toFixed(2)} - ${email}`,
       text: adminEmailContent,
+    });
+
+    const origin = req.headers.get("origin") || "https://intelligencerepository.com";
+    const clientIp =
+      req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+      req.headers.get("x-real-ip") ||
+      undefined;
+    const userAgent = req.headers.get("user-agent") || undefined;
+
+    void sendMetaConversionEvent({
+      eventName: "Purchase",
+      eventId: checkout_id,
+      eventSourceUrl: `${origin}/checkout/success?checkout_id=${checkout_id}&product=${product_slug}`,
+      userData: {
+        em: email,
+        external_id: user_id,
+        client_ip_address: clientIp,
+        client_user_agent: userAgent,
+      },
+      customData: {
+        value: amount / 100,
+        currency: "USD",
+        content_name: product.name,
+        content_ids: [product_slug],
+        content_type: "product",
+      },
+      testEventCode: process.env.META_CAPI_TEST_EVENT_CODE,
     });
 
     return NextResponse.json({ success: true });

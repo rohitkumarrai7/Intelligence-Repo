@@ -7,18 +7,37 @@ import { Check, Zap, ArrowRight, Loader2, Download, Shield, Sparkles, TrendingUp
 import { useRouter } from "next/navigation";
 import { Navbar, Footer } from "@/components/ui/Navbar";
 import { productPacks } from "@/lib/data";
+import { generateClientEventId, getMetaBrowserIds, trackInitiateCheckout } from "@/lib/meta-client";
+import { useUser } from "@clerk/nextjs";
 
 export default function PricingPage() {
   const router = useRouter();
+  const { user } = useUser();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (productSlug: string, priceId: string) => {
     setLoading(productSlug);
     try {
+      const eventId = generateClientEventId();
+      const selectedPack = productPacks.find((pack) => pack.slug === productSlug);
+      const value = selectedPack ? selectedPack.price : 0;
+
+      trackInitiateCheckout({
+        eventId,
+        value,
+        currency: "USD",
+        contentName: selectedPack?.name || productSlug,
+        contentIds: [productSlug],
+      });
+
+      const { fbp, fbc } = getMetaBrowserIds();
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const externalId = user?.id;
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productSlug, priceId }),
+        body: JSON.stringify({ productSlug, priceId, eventId, fbp, fbc, email, externalId }),
       });
       const data = await response.json();
       if (data.checkoutUrl) {

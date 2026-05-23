@@ -9,9 +9,12 @@ import { useParams, useRouter } from "next/navigation";
 import { Navbar, Footer } from "@/components/ui/Navbar";
 import { MarketplaceCard } from "@/components/ui/Card";
 import { products, getProductBySlug } from "@/lib/data";
+import { generateClientEventId, getMetaBrowserIds, trackInitiateCheckout } from "@/lib/meta-client";
+import { useUser } from "@clerk/nextjs";
 
 export default function ProductDetailPage() {
   const params = useParams();
+  const { user } = useUser();
   const product = getProductBySlug(params.slug as string);
   const [copied, setCopied] = useState(false);
   const [purchasing, setPurchasing] = useState(false);
@@ -46,10 +49,22 @@ export default function ProductDetailPage() {
   const handlePurchase = async () => {
     setPurchasing(true);
     try {
+      const eventId = generateClientEventId();
+      trackInitiateCheckout({
+        eventId,
+        value: product.price,
+        currency: "USD",
+        contentName: product.name,
+        contentIds: [product.slug],
+      });
+      const { fbp, fbc } = getMetaBrowserIds();
+      const email = user?.primaryEmailAddress?.emailAddress;
+      const externalId = user?.id;
+
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productSlug: product.slug }),
+        body: JSON.stringify({ productSlug: product.slug, eventId, fbp, fbc, email, externalId }),
       });
       const data = await response.json();
       if (data.checkoutUrl) {
