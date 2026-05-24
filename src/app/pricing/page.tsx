@@ -8,11 +8,9 @@ import { useRouter } from "next/navigation";
 import { Navbar, Footer } from "@/components/ui/Navbar";
 import { productPacks } from "@/lib/data";
 import { generateClientEventId, getMetaBrowserIds, trackInitiateCheckout } from "@/lib/meta-client";
-import { useUser } from "@clerk/nextjs";
 
 export default function PricingPage() {
   const router = useRouter();
-  const { user } = useUser();
   const [loading, setLoading] = useState<string | null>(null);
 
   const handleCheckout = async (productSlug: string, priceId: string) => {
@@ -31,13 +29,11 @@ export default function PricingPage() {
       });
 
       const { fbp, fbc } = getMetaBrowserIds();
-      const email = user?.primaryEmailAddress?.emailAddress;
-      const externalId = user?.id;
 
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productSlug, priceId, eventId, fbp, fbc, email, externalId }),
+        body: JSON.stringify({ productSlug, priceId, eventId, fbp, fbc }),
       });
       const data = await response.json();
       if (data.checkoutUrl) {
@@ -72,9 +68,6 @@ export default function PricingPage() {
           </div>
 
           {/* Single Pro Plan */}
-          <div className="mb-32">
-            <div className="max-w-2xl mx-auto">
-              // Single Complete Bundle Plan
           <div className="mb-32">
             <div className="max-w-2xl mx-auto">
               <motion.div
@@ -123,8 +116,6 @@ export default function PricingPage() {
                   <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" /> Get All Access
                 </a>
               </motion.div>
-            </div>
-          </div>
             </div>
           </div>
 
