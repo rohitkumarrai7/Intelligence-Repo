@@ -6,7 +6,7 @@ import { useEffect } from "react";
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
-    const key = process.env.NEXT_PUBLIC_POSTHOG_KEY;
+    const key = "phc_qyDNYymNdKKHdcZYPcxeNeQirJaByLe6pqLqn4Wddn97";
     const host = process.env.NEXT_PUBLIC_POSTHOG_HOST;
 
     if (!key) return;
