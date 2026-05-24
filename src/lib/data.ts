@@ -603,7 +603,13 @@ export const products: Product[] = [
   },
 ];
 
-export const getProductBySlug = (slug: string) => products.find(p => p.slug === slug);
+const POLAR_CHECKOUT_URL = "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0";
+
+export const getProductBySlug = (slug: string) => {
+  const p = products.find(p => p.slug === slug);
+  if (p && !p.polarCheckoutUrl) p.polarCheckoutUrl = POLAR_CHECKOUT_URL;
+  return p;
+};
 export const getProductsByType = (type: ProductType) => products.filter(p => p.type === type);
 export const getProductsByCategory = (category: ProductCategory) => products.filter(p => p.category === category);
 export const getFeaturedProducts = () => products.filter(p => p.rating >= 5 || p.comparePrice);

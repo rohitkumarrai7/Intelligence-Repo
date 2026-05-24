@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { SignInButton, SignUpButton, UserButton, SignedIn, SignedOut } from "@clerk/nextjs";
 import { Logo } from "@/components/ui/Logo";
 
 export function Navbar() {
@@ -18,18 +17,8 @@ export function Navbar() {
           <Link href="/pricing" className="text-sm font-medium text-text-secondary hover:text-primary transition">Pricing</Link>
         </div>
         <div className="flex items-center gap-4">
-          <SignedOut>
-            <SignInButton>
-              <button className="text-sm font-medium text-text-secondary hover:text-primary transition">Login</button>
-            </SignInButton>
-            <SignUpButton>
-              <button className="btn-primary text-sm">Get Started</button>
-            </SignUpButton>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/account" className="text-sm font-medium text-text-secondary hover:text-primary transition">Account</Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
+          <Link href="/login" className="text-sm font-medium text-text-secondary hover:text-primary transition">Login</Link>
+          <Link href="/signup" className="btn-primary text-sm">Get Started</Link>
         </div>
       </div>
     </nav>

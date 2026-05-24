@@ -1,0 +1,270 @@
+{
+  "name": "Dental Clinic - Appointment Booking Bot (Production)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "dental-booking",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [-1200, 200],
+      "id": "webhook-dental-001",
+      "name": "Webhook Trigger"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $json.body || $json;\n\n// Validate required fields\nconst errors = [];\nif (!body.patient_name || body.patient_name.trim() === '') errors.push('patient_name is required');\nif (!body.patient_email || !body.patient_email.includes('@')) errors.push('patient_email is required and must be valid');\nif (!body.patient_phone || body.patient_phone.trim() === '') errors.push('patient_phone is required');\nif (!body.preferred_date) errors.push('preferred_date is required (YYYY-MM-DD)');\nif (!body.preferred_time) errors.push('preferred_time is required (HH:MM)');\n\nif (errors.length > 0) {\n  return [{ json: { valid: false, errors } }];\n}\n\n// Validate date is not in the past\nconst apptDateTime = new Date(body.preferred_date + 'T' + body.preferred_time + ':00');\nif (apptDateTime <= new Date()) {\n  errors.push('Appointment date/time must be in the future');\n  return [{ json: { valid: false, errors } }];\n}\n\n// Normalise phone to E.164 (basic)\nlet phone = body.patient_phone.replace(/[\\s\\-()]/g, '');\nif (!phone.startsWith('+')) phone = '+' + phone;\n\nreturn [{\n  json: {\n    valid: true,\n    patient_name: body.patient_name.trim(),\n    patient_email: body.patient_email.trim().toLowerCase(),\n    patient_phone: phone,\n    preferred_date: body.preferred_date,\n    preferred_time: body.preferred_time,\n    service_type: body.service_type || 'general_checkup',\n    is_new_patient: body.is_new_patient === true || body.is_new_patient === 'true',\n    insurance: body.insurance || 'none',\n    notes: body.notes || ''\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-1000, 200],
+      "id": "parse-validate-002",
+      "name": "Parse & Validate"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "valid-check",
+              "leftValue": "={{ $json.valid }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-800, 200],
+      "id": "if-valid-003",
+      "name": "Is Valid?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: false,\n    message: 'Validation failed',\n    errors: $json.errors || ['Unknown validation error']\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-800, 420],
+      "id": "respond-invalid-004",
+      "name": "Respond: Validation Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.cal.com/v1/bookings",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "Bearer {{ $credentials.calApiKey }}" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({\n  \"eventTypeId\": $vars.CAL_EVENT_TYPE_ID,\n  \"start\": $json.preferred_date + \"T\" + $json.preferred_time + \":00\",\n  \"responses\": {\n    \"name\": $json.patient_name,\n    \"email\": $json.patient_email,\n    \"notes\": $json.notes\n  },\n  \"metadata\": {\n    \"service\": $json.service_type,\n    \"insurance\": $json.insurance,\n    \"new_patient\": $json.is_new_patient\n  },\n  \"language\": \"en\",\n  \"timeZone\": \"Asia/Kolkata\"\n}) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [-580, 200],
+      "id": "cal-booking-005",
+      "name": "Create Cal.com Booking"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "cal-status-check",
+              "leftValue": "={{ $json.status }}",
+              "rightValue": "ACCEPTED",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [-360, 200],
+      "id": "if-cal-ok-006",
+      "name": "Cal.com Booking OK?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Cal.com failed — capture the error response\nreturn [{\n  json: {\n    success: false,\n    message: 'Calendar booking failed',\n    cal_error: $json.message || $json.error || JSON.stringify($json)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [-360, 420],
+      "id": "respond-cal-error-007",
+      "name": "Respond: Cal.com Error"
+    },
+    {
+      "parameters": {
+        "tableId": "appointments",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "patient_name",   "fieldValue": "={{ $('Parse & Validate').item.json.patient_name }}" },
+            { "fieldId": "patient_email",  "fieldValue": "={{ $('Parse & Validate').item.json.patient_email }}" },
+            { "fieldId": "patient_phone",  "fieldValue": "={{ $('Parse & Validate').item.json.patient_phone }}" },
+            { "fieldId": "preferred_date", "fieldValue": "={{ $('Parse & Validate').item.json.preferred_date }}" },
+            { "fieldId": "preferred_time", "fieldValue": "={{ $('Parse & Validate').item.json.preferred_time }}" },
+            { "fieldId": "service_type",   "fieldValue": "={{ $('Parse & Validate').item.json.service_type }}" },
+            { "fieldId": "is_new_patient", "fieldValue": "={{ $('Parse & Validate').item.json.is_new_patient }}" },
+            { "fieldId": "insurance",      "fieldValue": "={{ $('Parse & Validate').item.json.insurance }}" },
+            { "fieldId": "notes",          "fieldValue": "={{ $('Parse & Validate').item.json.notes }}" },
+            { "fieldId": "cal_booking_id", "fieldValue": "={{ $json.uid }}" },
+            { "fieldId": "status",         "fieldValue": "confirmed" },
+            { "fieldId": "booking_source", "fieldValue": "voice_agent" },
+            { "fieldId": "created_at",     "fieldValue": "={{ new Date().toISOString() }}" }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.supabase",
+      "typeVersion": 1,
+      "position": [-140, 200],
+      "id": "supabase-appt-008",
+      "name": "Save Appointment"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict" },
+          "conditions": [
+            {
+              "id": "db-check",
+              "leftValue": "={{ $json.id }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [80, 200],
+      "id": "if-db-ok-009",
+      "name": "DB Save OK?"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{\n  json: {\n    success: false,\n    message: 'Database save failed',\n    db_error: $json.message || $json.error || JSON.stringify($json)\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [80, 420],
+      "id": "respond-db-error-010",
+      "name": "Respond: DB Error"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://api.twilio.com/2010-04-01/Accounts/{{ $vars.TWILIO_ACCOUNT_SID }}/Messages.json",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Authorization", "value": "={{ 'Basic ' + Buffer.from($vars.TWILIO_ACCOUNT_SID + ':' + $vars.TWILIO_AUTH_TOKEN).toString('base64') }}" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "To",   "value": "={{ $('Parse & Validate').item.json.patient_phone }}" },
+            { "name": "From", "value": "={{ $vars.TWILIO_FROM_NUMBER }}" },
+            {
+              "name": "Body",
+              "value": "={{ 'Hi ' + $('Parse & Validate').item.json.patient_name + ', your ' + $('Parse & Validate').item.json.service_type.replace(/_/g,' ') + ' appointment is confirmed for ' + $('Parse & Validate').item.json.preferred_date + ' at ' + $('Parse & Validate').item.json.preferred_time + '. Reply CANCEL to cancel. - Dr. Smith Dental' }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [300, 200],
+      "id": "sms-confirm-011",
+      "name": "Send SMS Confirmation"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SMS sent — build the final success response\nconst input = $('Parse & Validate').item.json;\nreturn [{\n  json: {\n    success: true,\n    message: 'Appointment booked successfully',\n    appointment: {\n      patient_name: input.patient_name,\n      patient_email: input.patient_email,\n      patient_phone: input.patient_phone,\n      date: input.preferred_date,\n      time: input.preferred_time,\n      service: input.service_type,\n      is_new_patient: input.is_new_patient,\n      cal_booking_id: $('Create Cal.com Booking').item.json.uid,\n      sms_sent: true\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 200],
+      "id": "respond-success-012",
+      "name": "Respond: Success"
+    },
+    {
+      "parameters": {
+        "jsCode": "// SMS failed but booking is confirmed — still return success with a warning\nconst input = $('Parse & Validate').item.json;\nreturn [{\n  json: {\n    success: true,\n    message: 'Appointment booked but SMS confirmation failed',\n    appointment: {\n      patient_name: input.patient_name,\n      patient_email: input.patient_email,\n      patient_phone: input.patient_phone,\n      date: input.preferred_date,\n      time: input.preferred_time,\n      service: input.service_type,\n      is_new_patient: input.is_new_patient,\n      cal_booking_id: $('Create Cal.com Booking').item.json.uid,\n      sms_sent: false,\n      sms_error: $json.message || JSON.stringify($json)\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 420],
+      "id": "respond-sms-warn-013",
+      "name": "Respond: SMS Warning"
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Parse & Validate", "type": "main", "index": 0 }]]
+    },
+    "Parse & Validate": {
+      "main": [[{ "node": "Is Valid?", "type": "main", "index": 0 }]]
+    },
+    "Is Valid?": {
+      "main": [
+        [{ "node": "Create Cal.com Booking", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Validation Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Create Cal.com Booking": {
+      "main": [[{ "node": "Cal.com Booking OK?", "type": "main", "index": 0 }]]
+    },
+    "Cal.com Booking OK?": {
+      "main": [
+        [{ "node": "Save Appointment", "type": "main", "index": 0 }],
+        [{ "node": "Respond: Cal.com Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Save Appointment": {
+      "main": [[{ "node": "DB Save OK?", "type": "main", "index": 0 }]]
+    },
+    "DB Save OK?": {
+      "main": [
+        [{ "node": "Send SMS Confirmation", "type": "main", "index": 0 }],
+        [{ "node": "Respond: DB Error", "type": "main", "index": 0 }]
+      ]
+    },
+    "Send SMS Confirmation": {
+      "main": [
+        [{ "node": "Respond: Success", "type": "main", "index": 0 }],
+        [{ "node": "Respond: SMS Warning", "type": "main", "index": 0 }]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": ""
+  },
+  "versionId": "dental-booking-002",
+  "id": "dental-booking-wf",
+  "tags": ["dental", "appointment", "cal.com", "sms", "production"]
+}
