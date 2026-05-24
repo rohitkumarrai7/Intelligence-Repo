@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Sparkles, Download, CreditCard, Package, ArrowRight, LogOut, Gift } from "lucide-react";
+import { Sparkles, Download, CreditCard, ArrowRight, LogOut, Gift } from "lucide-react";
 import { Navbar, Footer } from "@/components/ui/Navbar";
 
 interface UserWorkflow {

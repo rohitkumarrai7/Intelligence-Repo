@@ -31,7 +31,6 @@ export interface Product {
   setupTime?: string;
   promptText?: string;
   polarPriceId?: string;
-  polarCheckoutUrl?: string;
 }
 
 export const products: Product[] = [
@@ -45,7 +44,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Development",
-    price: 79,
+    price: 49,
     comparePrice: 129,
     thumbnail: "codebase-tars-conversa.png",
     rating: 5,
@@ -71,7 +70,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Sales",
-    price: 97,
+    price: 29,
     comparePrice: 149,
     thumbnail: "codebase-finflock.png",
     rating: 5,
@@ -97,7 +96,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Sales",
-    price: 127,
+    price: 35,
     comparePrice: 197,
     thumbnail: "codebase-gmaps-scraper.png",
     rating: 5,
@@ -123,7 +122,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Marketing",
-    price: 197,
+    price: 49,
     comparePrice: 297,
     thumbnail: "codebase-hashtric.png",
     rating: 5,
@@ -149,7 +148,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "HR",
-    price: 97,
+    price: 30,
     comparePrice: 149,
     thumbnail: "codebase-jobify-ats.png",
     rating: 5,
@@ -175,7 +174,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Sales",
-    price: 147,
+    price: 19,
     comparePrice: 217,
     thumbnail: "codebase-autostream.png",
     rating: 5,
@@ -201,7 +200,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "HR",
-    price: 67,
+    price: 39,
     comparePrice: 99,
     thumbnail: "codebase-resumod.png",
     rating: 5,
@@ -227,7 +226,7 @@ export const products: Product[] = [
     type: "codebase",
     category: "Codebases",
     niche: "Media",
-    price: 149,
+    price: 25,
     comparePrice: 219,
     thumbnail: "codebase-trend-analyzer.png",
     rating: 5,
@@ -272,7 +271,6 @@ export const products: Product[] = [
     difficulty: "intermediate",
     setupTime: "< 15 min",
     promptText: "You are a professional plumbing dispatch agent. Your job is to:\n1. Greet the caller warmly and professionally\n2. Determine if this is an emergency (burst pipe, flooding, gas leak) or general inquiry\n3. Collect: name, phone, address, description of issue\n4. For emergencies: immediately dispatch and notify the on-call technician via Slack\n5. For general inquiries: schedule an appointment and send SMS confirmation\n6. Always be empathetic and reassuring, especially during emergencies.",
-    polarCheckoutUrl: "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0",
   },
   {
     id: 2,
@@ -296,7 +294,6 @@ export const products: Product[] = [
     difficulty: "intermediate",
     setupTime: "< 15 min",
     promptText: "You are a friendly dental office receptionist AI. Your responsibilities:\n1. Greet the caller and ask how you can help\n2. For new patients: collect name, phone, email, insurance provider\n3. For existing patients: look up by name or phone\n4. Offer available appointment slots from Cal.com integration\n5. Confirm the appointment and send SMS confirmation\n6. Answer basic questions about services, hours, and location\n7. Always maintain a warm, professional bedside manner.",
-    polarCheckoutUrl: "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0",
   },
   {
     id: 3,
@@ -603,13 +600,7 @@ export const products: Product[] = [
   },
 ];
 
-const POLAR_CHECKOUT_URL = "https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0";
-
-export const getProductBySlug = (slug: string) => {
-  const p = products.find(p => p.slug === slug);
-  if (p && !p.polarCheckoutUrl) p.polarCheckoutUrl = POLAR_CHECKOUT_URL;
-  return p;
-};
+export const getProductBySlug = (slug: string) => products.find(p => p.slug === slug);
 export const getProductsByType = (type: ProductType) => products.filter(p => p.type === type);
 export const getProductsByCategory = (category: ProductCategory) => products.filter(p => p.category === category);
 export const getFeaturedProducts = () => products.filter(p => p.rating >= 5 || p.comparePrice);

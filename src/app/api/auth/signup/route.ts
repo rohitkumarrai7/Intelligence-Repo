@@ -13,60 +13,72 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Password must be at least 6 characters" }, { status: 400 });
     }
 
+    const normalizedEmail = email.trim().toLowerCase();
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+    const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 
-    const { data: authData, error: authError } = await supabase.auth.signUp({
-      email,
+    const authSupabase = createClient(supabaseUrl, supabaseAnonKey);
+    const adminSupabase = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: created, error: createError } = await adminSupabase.auth.admin.createUser({
+      email: normalizedEmail,
       password,
-      options: {
-        data: { name: name || "" },
-      },
+      email_confirm: true,
+      user_metadata: { name: name || "" },
     });
 
-    if (authError) {
-      return NextResponse.json({ error: authError.message }, { status: 400 });
+    if (createError) {
+      return NextResponse.json({ error: createError.message }, { status: 400 });
     }
 
-    const userId = authData.user?.id;
-    if (!userId) {
-      return NextResponse.json({ error: "Signup failed — no user ID returned" }, { status: 500 });
+    if (!created.user?.id) {
+      return NextResponse.json({ error: "Signup failed - no user ID returned" }, { status: 500 });
     }
 
-    const { error: userError } = await supabase.from("users").upsert({
+    const { data: sessionData, error: loginError } = await authSupabase.auth.signInWithPassword({
+      email: normalizedEmail,
+      password,
+    });
+
+    if (loginError || !sessionData.session) {
+      return NextResponse.json({ error: loginError?.message || "Signup succeeded, but login failed" }, { status: 400 });
+    }
+
+    const userId = created.user.id;
+
+    const { error: userError } = await adminSupabase.from("users").upsert({
       id: userId,
-      email,
+      email: normalizedEmail,
       name: name || null,
       role: "USER",
     }, { onConflict: "id" });
 
     if (userError) {
-      console.error("Failed to insert user row:", userError);
+      console.warn("Failed to create user profile:", userError.message);
     }
 
-    const { error: wfError } = await supabase.from("user_workflows").insert({
+    const { error: workflowError } = await adminSupabase.from("user_workflows").insert({
       user_id: userId,
-      email,
       workflow_slug: "dental-appointment-booking",
       source: "FREE_SIGNUP",
       status: "ACTIVE",
     });
 
-    if (wfError) {
-      console.error("Failed to grant free dental workflow:", wfError);
+    if (workflowError) {
+      console.warn("Failed to grant free dental workflow:", workflowError.message);
     }
 
-    return NextResponse.json({
-      success: true,
-      userId,
-      message: "Account created! Dental workflow granted.",
-      freeWorkflow: {
-        slug: "dental-appointment-booking",
-        name: "Dental Clinic Appointment Booking Bot",
-        downloadUrl: "/workflow/json/dental-booking-production.json",
-      },
+    const res = NextResponse.json({ success: true, userId, email: normalizedEmail });
+    res.cookies.set("sb-access-token", sessionData.session.access_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: sessionData.session.expires_in,
     });
+
+    return res;
   } catch (error) {
     console.error("Signup error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

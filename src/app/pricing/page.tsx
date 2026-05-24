@@ -3,28 +3,23 @@
 import { useState } from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Check, Zap, ArrowRight, Loader2, Download, Shield, Sparkles, TrendingUp, Code2, Workflow, Mic, Package } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Check, Zap, ArrowRight, Loader2, Download, Shield, Sparkles, TrendingUp, Code2, Workflow, Mic } from "lucide-react";
 import { Navbar, Footer } from "@/components/ui/Navbar";
-import { productPacks } from "@/lib/data";
 import { generateClientEventId, getMetaBrowserIds, trackInitiateCheckout } from "@/lib/meta-client";
 
 export default function PricingPage() {
-  const router = useRouter();
   const [loading, setLoading] = useState<string | null>(null);
 
-  const handleCheckout = async (productSlug: string, priceId: string) => {
+  const handleCheckout = async (productSlug: string) => {
     setLoading(productSlug);
     try {
       const eventId = generateClientEventId();
-      const selectedPack = productPacks.find((pack) => pack.slug === productSlug);
-      const value = selectedPack ? selectedPack.price : 0;
 
       trackInitiateCheckout({
         eventId,
-        value,
+        value: productSlug === "complete-bundle" ? 350 : 0,
         currency: "USD",
-        contentName: selectedPack?.name || productSlug,
+        contentName: productSlug === "complete-bundle" ? "Complete Bundle" : productSlug,
         contentIds: [productSlug],
       });
 
@@ -33,13 +28,17 @@ export default function PricingPage() {
       const response = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ productSlug, priceId, eventId, fbp, fbc }),
+        body: JSON.stringify({ productSlug, eventId, fbp, fbc }),
       });
       const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Checkout failed. Please try again.");
+        return;
+      }
+
       if (data.checkoutUrl) {
         window.location.href = data.checkoutUrl;
-      } else if (data.demo) {
-        router.push(`/checkout/success?demo=true&product=${productSlug}&price=${data.price}`);
       } else {
         alert("Checkout failed. Please try again.");
       }
@@ -67,7 +66,7 @@ export default function PricingPage() {
             </p>
           </div>
 
-          {/* Single Pro Plan */}
+          {/* Single Complete Bundle Plan */}
           <div className="mb-32">
             <div className="max-w-2xl mx-auto">
               <motion.div
@@ -107,76 +106,20 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <a
-                  href="https://buy.polar.sh/polar_cl_nbkIgUTuFGTp4nqEfdKcprCOgSaNSLZ9pW6VW3VZhF0"
-                  data-polar-checkout
-                  data-polar-checkout-theme="dark"
-                  className="btn-primary w-full py-5 flex items-center justify-center gap-3 text-lg group cursor-pointer no-underline"
+                <button
+                  onClick={() => handleCheckout("complete-bundle")}
+                  disabled={loading === "complete-bundle"}
+                  className="btn-primary w-full py-5 flex items-center justify-center gap-3 text-lg group disabled:opacity-50"
                 >
-                  <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" /> Get All Access
-                </a>
+                  {loading === "complete-bundle" ? (
+                    <Loader2 className="w-5 h-5 animate-spin" />
+                  ) : (
+                    <>
+                      <Zap className="w-5 h-5 group-hover:scale-110 transition-transform" /> Get All Access
+                    </>
+                  )}
+                </button>
               </motion.div>
-            </div>
-          </div>
-
-          {/* Starter Codebase Pack */}
-          <div className="mb-20">
-            <div className="text-center mb-16">
-              <h2 className="text-4xl md:text-5xl font-bold mb-6 tracking-tight">Starter <span className="text-gradient">Codebase</span> Pack</h2>
-              <p className="text-text-secondary text-lg">3 production-ready codebases to kickstart your portfolio — at a fraction of the cost.</p>
-            </div>
-
-            <div className="max-w-xl mx-auto">
-              {productPacks.map((pack, i) => (
-                <motion.div
-                  key={pack.name}
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: i * 0.05 }}
-                  className="glass-card p-8 relative flex flex-col"
-                >
-                  <div className="flex items-start justify-between mb-6">
-                    <div>
-                      <h3 className="text-xl font-extrabold tracking-tight mb-2">{pack.name}</h3>
-                      <div className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg bg-success/10 text-success text-[10px] font-bold uppercase tracking-wider border border-success/20">
-                        <Sparkles className="w-3 h-3 fill-success" />
-                        {pack.savings}
-                      </div>
-                    </div>
-                    <div className="text-right">
-                      <div className="flex items-baseline justify-end gap-1">
-                        <span className="text-3xl font-extrabold tracking-tighter">${pack.price}</span>
-                      </div>
-                      <span className="text-text-muted line-through text-sm">${pack.originalPrice}</span>
-                    </div>
-                  </div>
-
-                  <p className="text-text-secondary text-sm mb-6">{pack.description}</p>
-
-                  <ul className="space-y-3 mb-8 flex-grow">
-                    {pack.items.map(item => (
-                      <li key={item} className="flex items-start gap-3 text-sm text-text-secondary">
-                        <Check className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                        {item}
-                      </li>
-                    ))}
-                  </ul>
-
-                  <button
-                    onClick={() => handleCheckout(pack.slug, pack.priceId)}
-                    disabled={loading === pack.slug}
-                    className="btn-secondary w-full py-4 flex items-center justify-center gap-3 disabled:opacity-50 group"
-                  >
-                    {loading === pack.slug ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                        <Package className="w-5 h-5" /> Purchase Starter Pack
-                      </>
-                    )}
-                  </button>
-                </motion.div>
-              ))}
             </div>
           </div>
 

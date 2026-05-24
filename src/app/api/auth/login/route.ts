@@ -9,21 +9,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Email and password are required" }, { status: 400 });
     }
 
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
-    const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
-    const supabase = createClient(supabaseUrl, supabaseKey);
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+    );
 
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
 
-    if (error) {
-      return NextResponse.json({ error: error.message }, { status: 401 });
+    if (error || !data.session || !data.user) {
+      return NextResponse.json({ error: error?.message || "Login failed" }, { status: 401 });
     }
 
-    return NextResponse.json({
-      success: true,
-      userId: data.user?.id,
-      email: data.user?.email,
+    const res = NextResponse.json({ success: true, userId: data.user.id, email: data.user.email });
+    res.cookies.set("sb-access-token", data.session.access_token, {
+      httpOnly: true,
+      sameSite: "lax",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+      maxAge: data.session.expires_in,
     });
+
+    return res;
   } catch (error) {
     console.error("Login error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

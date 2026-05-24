@@ -7,6 +7,7 @@ import { useSearchParams } from "next/navigation";
 import { Suspense, useEffect, useRef } from "react";
 import { Navbar, Footer } from "@/components/ui/Navbar";
 import { generateClientEventId, trackPurchase } from "@/lib/meta-client";
+import { getProductBySlug, productPacks } from "@/lib/data";
 
 const PRODUCT_DETAILS: Record<string, { name: string; files: string[]; price: number }> = {
   // Individual Workflows & Voice Agents
@@ -28,21 +29,26 @@ const PRODUCT_DETAILS: Record<string, { name: string; files: string[]; price: nu
   // Starter Pack
   "starter-codebase-pack": { name: "Starter Codebase Pack", price: 127, files: ["TARS-CONVERSA Source Code", "Jobify Extension Source", "Resumod Extension Source"] },
   // Complete Bundle
-  "complete-bundle": { name: "Complete Bundle — All Access", price: 300, files: ["All 8 Codebases", "All 15 Workflows & Voice Agents", "White-Label Rights", "Lifetime Updates"] },
+  "complete-bundle": { name: "Complete Bundle — All Access", price: 350, files: ["All 8 Codebases", "All 15 Workflows & Voice Agents", "White-Label Rights", "Lifetime Updates"] },
   "default": { name: "Product", price: 19, files: ["Source code / JSON files"] },
 };
 
 function CheckoutSuccessContent() {
   const searchParams = useSearchParams();
   const trackedRef = useRef(false);
-  const demo = searchParams.get("demo") === "true";
   const productSlug = searchParams.get("product") || "complete-bundle";
   const checkoutId = searchParams.get("checkout_id");
 
-  const product = PRODUCT_DETAILS[productSlug] || PRODUCT_DETAILS["default"];
+  const catalogProduct = getProductBySlug(productSlug);
+  const productPack = productPacks.find((pack) => pack.slug === productSlug);
+  const product = catalogProduct
+    ? { name: catalogProduct.name, price: catalogProduct.price, files: catalogProduct.includes }
+    : productPack
+      ? { name: productPack.name, price: productPack.price, files: productPack.items }
+      : PRODUCT_DETAILS[productSlug] || PRODUCT_DETAILS["default"];
 
   useEffect(() => {
-    if (trackedRef.current || demo) return;
+    if (trackedRef.current) return;
 
     const purchaseEventId = checkoutId || generateClientEventId();
     trackPurchase({
@@ -53,7 +59,7 @@ function CheckoutSuccessContent() {
       contentIds: [productSlug],
     });
     trackedRef.current = true;
-  }, [checkoutId, demo, product.name, product.price, productSlug]);
+  }, [checkoutId, product.name, product.price, productSlug]);
 
   return (
     <motion.div
@@ -76,7 +82,7 @@ function CheckoutSuccessContent() {
         transition={{ delay: 0.3 }}
         className="text-3xl font-bold text-center mb-2"
       >
-        {demo ? "Demo Purchase Complete!" : "Payment Successful!"}
+        Payment Successful!
       </motion.h1>
 
       <motion.p
@@ -85,7 +91,7 @@ function CheckoutSuccessContent() {
         transition={{ delay: 0.4 }}
         className="text-text-secondary text-center mb-8"
       >
-        {demo ? "This is a demo checkout." : "Thank you! Your files are ready to download."}
+        Thank you! Your files are ready to download.
       </motion.p>
 
       <motion.div
